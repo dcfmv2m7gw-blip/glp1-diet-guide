@@ -718,8 +718,15 @@ export default function App() {
     }
   };
 
-  const handlePrev = () => {
-    if (currentStep > 0) setCurrentStep(currentStep - 1);
+    const handlePrev = () => {
+    // 각 흐름의 1단계에서 "이전"을 누르면 인트로(flowType 없음, step 0)로 돌아간다.
+    // flowType은 그대로 두고 currentStep만 줄이면, 그 조합에 맞는 화면이 없어 빈 화면이 뜨는 문제가 있었음.
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    } else if (currentStep === 1) {
+      setFlowType(null);
+      setCurrentStep(0);
+    }
   };
 
   const handleReset = () => {
