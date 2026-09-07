@@ -18,7 +18,7 @@ const C = {
 const GUIDE_DATA = {
   stage: {
     title: "Stage",
-    question: "다음 중 자신에게 해당하는 투여 Stage를 선택해주세요.",
+    question: "다음 중 자신에게 해당하는 투여 Stage를 선택해주세요",
     options: [
       { id: "stage1", label: "Stage 1: 약물 증량기", description: "현재 GLP-1 비만치료제를 투여 중이며, 시작 용량 또는 증량 과정에 있음" },
       { id: "stage2", label: "Stage 2: 약물 용량 유지기", description: "현재 GLP-1 비만치료제를 투여 중이며, 의료진이 권장하는 목표 유지 용량에 도달함" },
@@ -27,8 +27,8 @@ const GUIDE_DATA = {
     recommendations: {
       stage1: {
         title: "Stage 1: 약물 증량기",
+        goal: "위장관 장애 완화와 탈수 및 영양 부족 예방",
         points: [
-          "위장관 장애 완화와 탈수 및 영양 부족 예방이 핵심 목표입니다.",
           "처음 투여를 시작하거나 용량을 늘릴 때는 메스꺼움, 구토, 설사, 변비, 복통 등의 위장관 장애가 흔하게 나타날 수 있으나, 대개 시간이 지나며 증상이 완화됩니다.",
           "한 끼에 무리해서 많이 먹기보다는 소량을 규칙적으로 식사합니다.",
           "전체 식사량이 줄어드는 만큼 근육 손실을 막기 위해 달걀, 두부, 살코기 등 단백질 식품을 우선적으로 섭취합니다.",
@@ -39,8 +39,8 @@ const GUIDE_DATA = {
       },
       stage2: {
         title: "Stage 2: 약물 용량 유지기",
+        goal: "충분한 영양소 섭취와 근육·골량 유지, 지속 가능한 식사 습관 형성",
         points: [
-          "충분한 영양소 섭취와 근육·골량 유지, 지속 가능한 식사 습관을 형성하는 것이 핵심 목표입니다.",
           "약물 용량 유지기에 들어서면 위장관 장애는 평균적으로 점차 감소하지만, 식욕 저하와 적은 식사량은 지속될 수 있습니다.",
           "식사량이 줄어든 상태가 지속되면 철, 칼슘, 마그네슘, 아연, 비타민 A·D·E·K·B1·B12·C 결핍 위험이 커질 수 있습니다.",
           "근육량 유지를 위해 끼니마다 단백질 식품을 지속적으로 챙겨 먹어야 합니다. 다만, 단백질 섭취만으로 근육량을 유지하기는 어려우므로 근력 운동도 병행해야 합니다.",
@@ -48,8 +48,8 @@ const GUIDE_DATA = {
       },
       stage3: {
         title: "Stage 3: 투여 중단 및 완료기",
+        goal: "식욕과 식사량의 반등에 대비하고, 체중 재증가(요요 현상)를 막을 수 있는 식사 습관 유지",
         points: [
-          "식욕과 식사량의 반등에 대비하고, 체중 재증가(요요 현상)를 막을 수 있는 식사 습관을 유지하는 것이 핵심 목표입니다.",
           "약물 증량기(Stage 1)의 낮은 식사량을 유지하는 것이 아닌, 현재 체중·활동량·체중 변화에 따라 식사량을 재설정해야 합니다.",
           "식욕이 돌아왔을 때 무조건 참거나 굶기보다는 규칙적인 식사 시간, 아침 식사 챙겨 먹기, 가공식품 섭취 줄이기 등의 건강한 식습관을 유지하세요.",
           "지나친 통제로 인한 폭식을 막기 위해 정제 탄수화물, 가당 음료, 초가공식품을 완전히 금지하기보다는 소량의 섭취는 허용하도록 합니다.",
@@ -59,7 +59,7 @@ const GUIDE_DATA = {
   },
   sideEffects: {
     title: "부작용",
-    question: "다음 중 자신에게 해당하는 부작용을 선택해주세요.",
+    question: "다음 중 자신에게 해당하는 부작용을 선택해주세요",
     note: "심혈관계 이상(빈맥·저혈압), 전신 장애 및 투여 부위 병태(피로·근육통·주사 부위 반응), 면역계 장애(과민반응), 눈 장애(제2형 당뇨병 환자에서의 당뇨병성 망막병증) 등은 식이요법과 무관하므로 이 항목에서 다루지 않아요. 관련 증상이 있다면 즉시 의료진과 상담하세요.",
     options: [
       { id: "nausea", label: "오심", description: "속이 울렁거리거나 토할 것 같은 느낌이 있나요? 음식 냄새만으로 메스꺼운 경우도 포함됩니다." },
@@ -134,34 +134,61 @@ const GUIDE_DATA = {
     ],
     recommendations: {
       none: {
-        title: "입맛이 거의 없을 때",
+        title: "입맛이 거의 없고 음식을 먹는 것이 부담스러울 때",
         points: [
-          "한 번에 평균 식사량을 섭취하려 하지 말고 3~4시간 간격으로 소량 분할 섭취하며, 냄새가 강하거나 기름진 조리법은 피하세요.",
-          "미온수의 물을 조금씩 자주 마셔 체액을 보충하세요. 식사량이 급감할 때 수분 섭취가 줄면 탈수로 인한 급성 신손상 위험이 커지므로, 하루 종일 물을 나누어 마셔 탈수를 우선 예방해야 해요.",
-          "고형식 대신 부드러운 단백질 연식·유동식을 활용하세요. 씹어 삼키기 힘든 고형식 대신 고단백 쉐이크, 스무디, 맑은 단백질 수프, 계란찜 등을 활용하여 근육 손실과 영양 결핍을 방지하세요.",
+          {
+            head: "적은 양을 3~4시간 간격으로 나누어 드세요",
+            body: "한 번에 평균 식사량을 섭취하려 하지 말고, 3~4시간 간격으로 소량 분할 섭취하며 냄새가 강하거나 기름진 조리법은 피하세요.",
+          },
+          {
+            head: "미온수의 물을 조금씩 자주 마셔 체액을 보충하세요",
+            body: "식사량이 급감할 때 수분 섭취가 줄면 탈수로 인한 급성 신손상 위험이 커지므로, 하루 종일 물을 나누어 마셔 탈수를 우선 예방해야 해요.",
+          },
+          {
+            head: "고형식 대신 부드러운 단백질 연식, 유동식을 활용하세요",
+            body: "씹어 삼키기 힘든 고형식 대신 고단백 쉐이크, 스무디, 맑은 단백질 수프, 계란찜 등을 활용하여 근육 손실과 영양 결핍을 방지하세요.",
+          },
         ],
       },
       moderate: {
-        title: "적당한 식욕",
+        title: "식욕이 적당하고 소식으로도 만족스럽게 식사할 수 있을 때",
         points: [
-          "식사할 때 단백질을 먼저 챙기세요. 조기 포만감이 느껴질 수 있으므로 생선, 달걀, 콩류, 유제품, 살코기 등 단백질 식품을 먼저 선택하세요.",
-          "영양 밀도 높은 식품을 골고루 선택하세요. 과일, 채소, 통곡물, 콩류, 견과류 등 덜 가공된 식품을 중심으로 식사해 보세요. 단 음료, 정제 탄수화물, 패스트푸드, 가공 간식은 먹는 횟수를 줄여 보세요.",
-          "천천히 드시고, 포만감을 확인하세요. 한 번에 많은 식사보다 천천히 소량으로 드세요. 포만감이 느껴지면 더 먹기보다 다음 식사로 넘겨 보세요.",
+          {
+            head: "식사할 때 단백질을 먼저 챙기세요",
+            body: "조기 포만감이 느껴질 수 있으므로 생선, 달걀, 콩류, 유제품, 살코기 등 단백질 식품을 먼저 선택하세요.",
+          },
+          {
+            head: "영양 밀도 높은 식품을 골고루 선택하세요",
+            body: "과일, 채소, 통곡물, 콩류, 견과류 등 덜 가공된 식품을 중심으로 식사해 보세요. 단 음료, 정제 탄수화물, 패스트푸드, 가공 간식은 먹는 횟수를 줄여 보세요.",
+          },
+          {
+            head: "천천히 드시고, 포만감을 확인하세요",
+            body: "한 번에 많은 식사보다 천천히 소량으로 드세요. 포만감이 느껴지면 더 먹기보다 다음 식사로 넘겨 보세요.",
+          },
         ],
       },
       high: {
-        title: "허기와 음식 생각이 많을 때",
+        title: "배고픔이 심하게 몰려오거나 단 음식·야식·간식 생각이 계속 맴돌 때",
         points: [
-          "물 한 컵을 천천히 마시고 15분간 기다려보세요. 갈증이나 감정적 스트레스로 인한 가짜 배고픔(Food Noise)일 수 있으므로, 물을 천천히 마시며 진짜 허기인지 먼저 점검하세요.",
-          "초가공식품 대신 고단백·고식이섬유 간식을 선택하세요. 배달음식이나 과자 대신 삶은 달걀, 그릭 요거트, 풋콩, 견과류 한 줌, 방울토마토·오이 등을 먼저 섭취해 음식 갈망을 잠재우세요.",
-          "장시간 공복으로 인한 보상성 폭식을 주의하세요. 오랜 시간 식사를 거르면 강한 폭식이 발생하기 쉬우므로, 끼니를 거르지 말고 규칙적으로 적정량의 식사를 유지하세요.",
+          {
+            head: "물 한 컵을 천천히 마시고 15분간 기다려보세요",
+            body: "갈증이나 감정적 스트레스로 인한 가짜 배고픔(Food Noise)일 수 있으므로, 물을 천천히 마시며 진짜 허기인지 먼저 점검하세요.",
+          },
+          {
+            head: "초가공식품 대신 고단백·고식이섬유 간식을 선택하세요",
+            body: "배달음식이나 과자 대신 삶은 달걀, 그릭 요거트, 풋콩, 견과류 한 줌, 방울토마토·오이 등을 먼저 섭취해 음식 갈망을 잠재우세요.",
+          },
+          {
+            head: "장시간 공복으로 인한 보상성 폭식을 주의하세요",
+            body: "오랜 시간 식사를 거르면 강한 폭식이 발생하기 쉬우므로, 끼니를 거르지 말고 규칙적으로 적정량의 식사를 유지하세요.",
+          },
         ],
       },
     },
   },
   weight: {
     title: "체중 변화",
-    question: "투여 전후 체중과 투여 정보를 입력하면 체중감량률을 계산해드려요.",
+    question: "투여 전후 체중과 투여 정보를 입력해주세요",
   },
 };
 
@@ -202,6 +229,27 @@ const WEIGHT_TABLES = {
   },
 };
 
+const DRUG_SHORT = { wegovy: "위고비", mounjaro: "마운자로" };
+
+// 체중 결과화면 각주 — 약물 × 당뇨 여부 4가지
+const WEIGHT_STUDY_NOTES = {
+  wegovy: {
+    noDiabetes:
+      "위 수치는 **당뇨병이 없는 성인**을 대상으로 한 세마글루타이드 2.4 mg(**위고비**)의 STEP 1 연구에서 **치료 시작 후 주차별 누적 체중감량률**을 정리한 표를 기반으로 합니다. 연구에서 제시된 시간경과별 체중변화 그래프를 AI 기반 그래프 디지타이징(graph digitizing)으로 분석하여 산출하였습니다. 따라서 그래프 판독에 따른 근사값이 포함될 수 있습니다.",
+    diabetes:
+      "위 수치는 **당뇨병이 있는 성인**을 대상으로 한 세마글루타이드 2.4 mg(**위고비**)의 STEP 2 연구에서 **치료 시작 후 주차별 누적 체중감량률**을 정리한 표를 기반으로 합니다. 연구에서 제시된 시간경과별 체중변화 그래프를 AI 기반 그래프 디지타이징(graph digitizing)으로 분석하여 산출하였습니다. 따라서 그래프 판독에 따른 근사값이 포함될 수 있습니다.",
+  },
+  mounjaro: {
+    noDiabetes:
+      "위 수치는 **당뇨병이 없는 성인**을 대상으로 한 티르제파타이드(**마운자로**)의 SURMOUNT-1 연구에서 **치료 시작 후 주차별 누적 체중감량률**을 정리한 표를 기반으로 합니다. 연구에서 제시된 시간경과별 체중변화 그래프를 AI 기반 그래프 디지타이징(graph digitizing)으로 분석하여 산출하였습니다. 따라서 그래프 판독에 따른 근사값이 포함될 수 있습니다.",
+    diabetes:
+      "위 수치는 **당뇨병이 있는 성인**을 대상으로 한 티르제파타이드(**마운자로**)의 SURMOUNT-2 연구에서 **치료 시작 후 주차별 누적 체중감량률**을 정리한 표를 기반으로 합니다. 연구에서 제시된 시간경과별 체중변화 그래프를 AI 기반 그래프 디지타이징(graph digitizing)으로 분석하여 산출하였습니다. 따라서 그래프 판독에 따른 근사값이 포함될 수 있습니다.",
+  },
+};
+
+const WEIGHT_COMMON_NOTE =
+  "제시된 수치는 개인별 목표치나 안전 상한선이 아닙니다. 각 임상시험에서 시험약을 지속적으로 사용한 조건에서 관찰·추정된 평균적 누적 체중감량 경과를 참고하기 위한 값으로 해석해야 합니다.";
+
 function findClosestWeekIndex(weeksArr, target) {
   let bestIdx = 0;
   let bestDiff = Infinity;
@@ -218,13 +266,6 @@ function findClosestWeekIndex(weeksArr, target) {
 function rangeLabel(v) {
   if (Array.isArray(v)) return `${v[0]}~${v[1]}%`;
   return `${v}%`;
-}
-
-function compareToRange(rate, v) {
-  const [min, max] = Array.isArray(v) ? v : [v, v];
-  if (rate < min) return "below";
-  if (rate > max) return "above";
-  return "within";
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -704,6 +745,40 @@ function FoodLabel({ name, size = "text-sm" }) {
   );
 }
 
+// 원문에서 굵게 표시된 **구간**을 굵은 글씨로 그린다
+function RichText({ text }) {
+  return (
+    <>
+      {text.split("**").map((part, i) =>
+        i % 2 === 1 ? (
+          <strong key={i} style={{ color: C.ink }}>{part}</strong>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </>
+  );
+}
+
+// 권고 한 줄. 식욕처럼 "제목: 설명" 구조인 항목은 첫줄을 강조해서 보여준다.
+function GuidePoint({ point }) {
+  const head = typeof point === "string" ? null : point.head;
+  const body = typeof point === "string" ? point : point.body;
+  return (
+    <li className="flex gap-3 text-sm leading-relaxed">
+      <span style={{ color: C.apricot }}>#</span>
+      <span>
+        {head && (
+          <strong className="block mb-1" style={{ color: C.sageDeep }}>
+            {head}
+          </strong>
+        )}
+        {body}
+      </span>
+    </li>
+  );
+}
+
 function VitaminLegend() {
   const keys = Object.keys(VITAMIN_META);
   return (
@@ -813,16 +888,17 @@ export default function App() {
     const cur = Number(guideCurrentWeight);
     const wk = Number(guideWeeks);
     if (!init || !cur || !guideDiabetes) return null;
+    const key = guideDiabetes === "예" ? "diabetes" : "noDiabetes";
     const lossRate = ((init - cur) / init) * 100;
-    const table = WEIGHT_TABLES[guideDrug][guideDiabetes === "예" ? "diabetes" : "noDiabetes"];
+    const table = WEIGHT_TABLES[guideDrug][key];
     const idx = findClosestWeekIndex(table.weeks, wk || 0);
     const closestWeek = table.weeks[idx];
-    const seriesAtWeek = Object.entries(table.series).map(([label, values]) => ({
-      label,
-      value: values[idx],
-      compare: compareToRange(lossRate, values[idx]),
+    // 마운자로는 용량별로, 위고비는 단일 값으로 평균 감량률을 보여준다
+    const averages = Object.entries(table.series).map(([label, values]) => ({
+      dose: label === "관찰 구간" ? "" : ` ${label}`,
+      value: rangeLabel(values[idx]),
     }));
-    return { lossRate, studyLabel: table.studyLabel, closestWeek, seriesAtWeek };
+    return { lossRate, closestWeek, averages, note: WEIGHT_STUDY_NOTES[guideDrug][key] };
   }, [guideInitialWeight, guideCurrentWeight, guideDrug, guideWeeks, guideDiabetes]);
 
   // 각 단계에서 아직 고를 수 있는 선택지 (DB상 결과가 0개가 되는 선택은 막는다)
@@ -1016,7 +1092,7 @@ export default function App() {
                 GLP-1 케어 다이어리
               </span>
               <p className="mt-6 max-w-md text-base leading-relaxed mx-auto" style={{ color: C.ink60 }}>
-                오늘을 위해 가장 알맞은 방법을 선택해주세요.
+                GLP-1 복용자를 위한 오늘의 식사 선택과 맞춤 권고를 확인해보세요.
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
@@ -1080,9 +1156,8 @@ export default function App() {
               <span className="font-mono text-xs" style={{ color: C.ink60 }}>맞춤 권고</span>
             </div>
             <div className="rounded-3xl p-6 md:p-8" style={{ background: C.sagePale, border: `1px solid ${C.sagePale}` }}>
-              <p className="font-mono text-xs uppercase tracking-widest mb-3" style={{ color: C.sageDeep }}>QUESTION</p>
-              <h2 className="font-display text-2xl md:text-3xl font-semibold mb-2">{GUIDE_DATA[guideCategory].title}</h2>
-              <p className="text-sm leading-relaxed" style={{ color: C.ink60 }}>{GUIDE_DATA[guideCategory].question}</p>
+              <p className="font-mono text-xs tracking-widest mb-3" style={{ color: C.sageDeep }}>{GUIDE_DATA[guideCategory].title}</p>
+              <h2 className="font-display text-2xl md:text-3xl font-semibold leading-snug">{GUIDE_DATA[guideCategory].question}</h2>
             </div>
             {GUIDE_DATA[guideCategory].note && (
               <div className="rounded-2xl p-4 flex items-start gap-2.5 text-xs leading-relaxed" style={{ background: "#fff", border: `1px solid ${C.sagePale}`, color: C.ink60 }}>
@@ -1106,6 +1181,8 @@ export default function App() {
           const selected = guide.options.find((option) => option.id === guideAnswer);
           const recommendation = guide.recommendations[guideAnswer];
           const points = Array.isArray(recommendation) ? recommendation : recommendation.points;
+          const goal = Array.isArray(recommendation) ? null : recommendation.goal;
+          const heading = (!Array.isArray(recommendation) && recommendation.title) || selected.label;
           return (
             <div className="flex flex-col gap-6">
               <div className="flex items-center justify-between">
@@ -1116,13 +1193,22 @@ export default function App() {
               </div>
               <div className="rounded-3xl p-6 md:p-8" style={{ background: C.sagePale }}>
                 <p className="font-mono text-xs uppercase tracking-widest mb-3" style={{ color: C.sageDeep }}>RECOMMENDATION</p>
-                <h2 className="font-display text-2xl md:text-3xl font-semibold mb-2">{(!Array.isArray(recommendation) && recommendation.title) || selected.label}</h2>
-                <p className="text-sm leading-relaxed" style={{ color: C.ink60 }}>{selected.label}</p>
+                <h2 className="font-display text-2xl md:text-3xl font-semibold leading-snug">{heading}</h2>
               </div>
+              {goal && (
+                <div className="rounded-3xl p-6 md:p-8" style={{ background: C.card, border: `1px solid ${C.sagePale}` }}>
+                  <h3 className="font-display text-xl font-semibold mb-5">핵심 목표</h3>
+                  <ul className="flex flex-col gap-4 m-0 p-0 list-none">
+                    <GuidePoint point={goal} />
+                  </ul>
+                </div>
+              )}
               <div className="rounded-3xl p-6 md:p-8" style={{ background: C.card, border: `1px solid ${C.sagePale}` }}>
                 <h3 className="font-display text-xl font-semibold mb-5">권고사항</h3>
                 <ul className="flex flex-col gap-4 m-0 p-0 list-none">
-                  {points.map((point) => <li key={point} className="flex gap-3 text-sm leading-relaxed"><span style={{ color: C.apricot }}>#</span><span>{point}</span></li>)}
+                  {points.map((point) => (
+                    <GuidePoint key={typeof point === "string" ? point : point.head} point={point} />
+                  ))}
                 </ul>
               </div>
             </div>
@@ -1138,9 +1224,8 @@ export default function App() {
               <span className="font-mono text-xs" style={{ color: C.ink60 }}>맞춤 권고</span>
             </div>
             <div className="rounded-3xl p-6 md:p-8" style={{ background: C.sagePale, border: `1px solid ${C.sagePale}` }}>
-              <p className="font-mono text-xs uppercase tracking-widest mb-3" style={{ color: C.sageDeep }}>QUESTION</p>
-              <h2 className="font-display text-2xl md:text-3xl font-semibold mb-2">체중</h2>
-              <p className="text-sm leading-relaxed" style={{ color: C.ink60 }}>투여 전후 체중과 투여 정보를 입력하면 체중감량률을 계산해드려요.</p>
+              <p className="font-mono text-xs tracking-widest mb-3" style={{ color: C.sageDeep }}>체중</p>
+              <h2 className="font-display text-2xl md:text-3xl font-semibold leading-snug">투여 전후 체중과 투여 정보를 입력해주세요</h2>
             </div>
             <div className="rounded-3xl p-6 md:p-8 flex flex-col gap-5" style={{ background: C.card, border: `1px solid ${C.sagePale}` }}>
               <div>
@@ -1187,31 +1272,28 @@ export default function App() {
               <button type="button" onClick={() => setGuideAnswer(null)} className="text-sm font-medium" style={{ color: C.apricotDeep }}>다시 입력</button>
             </div>
             <div className="rounded-3xl p-6 md:p-8" style={{ background: C.sagePale }}>
-              <p className="font-mono text-xs uppercase tracking-widest mb-3" style={{ color: C.sageDeep }}>RECOMMENDATION</p>
-              <h2 className="font-display text-2xl md:text-3xl font-semibold mb-2">
-                투여 {guideWeeks || 0}주차, 체중 감량률 {weightResult.lossRate.toFixed(1)}%
+              <h2 className="font-display text-2xl md:text-3xl font-semibold leading-snug" style={{ color: C.ink }}>
+                {weightResult.lossRate >= 0
+                  ? `당신은 ${guideWeeks || 0}주차에 체중 감량률 ${weightResult.lossRate.toFixed(1)}%를 달성하셨습니다!`
+                  : `당신은 ${guideWeeks || 0}주차에 체중이 ${Math.abs(weightResult.lossRate).toFixed(1)}% 늘었어요.`}
               </h2>
-              <p className="text-sm leading-relaxed" style={{ color: C.ink60 }}>
-                {WEIGHT_TABLES[guideDrug].label} · {weightResult.studyLabel} 기준 {weightResult.closestWeek}주차 참고 구간과 비교했어요.
-              </p>
             </div>
-            <div className="rounded-3xl p-6 md:p-8" style={{ background: C.card, border: `1px solid ${C.sagePale}` }}>
-              <h3 className="font-display text-xl font-semibold mb-5">참고 구간 비교</h3>
-              <div className="flex flex-col gap-3">
-                {weightResult.seriesAtWeek.map((s) => (
-                  <div key={s.label} className="flex items-center justify-between rounded-xl px-4 py-3" style={{ background: "#fff", border: `1px solid ${C.sagePale}` }}>
-                    <span className="text-sm font-medium">{s.label}</span>
-                    <span className="text-sm" style={{ color: C.ink60 }}>{rangeLabel(s.value)}</span>
-                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: s.compare === "within" ? C.sagePale : "#FFF3EC", color: s.compare === "within" ? C.sageDeep : C.apricotDeep }}>
-                      {s.compare === "within" ? "참고 구간과 비슷함" : s.compare === "above" ? "참고 구간보다 높음" : "참고 구간보다 낮음"}
-                    </span>
-                  </div>
-                ))}
-              </div>
+            <div className="rounded-3xl p-6 md:p-8 flex flex-col gap-3" style={{ background: C.card, border: `1px solid ${C.sagePale}` }}>
+              {weightResult.averages.map((a) => (
+                <p key={a.dose} className="text-sm leading-relaxed">
+                  {DRUG_SHORT[guideDrug]}{a.dose} {weightResult.closestWeek}주차의 사람들의 평균 체중 감량률은{" "}
+                  <strong style={{ color: C.sageDeep }}>{a.value}</strong>입니다.
+                </p>
+              ))}
+              {Number(guideWeeks) !== weightResult.closestWeek && (
+                <p className="text-xs" style={{ color: C.ink60 }}>
+                  입력하신 {guideWeeks || 0}주차와 가장 가까운 {weightResult.closestWeek}주차 자료로 비교했어요.
+                </p>
+              )}
             </div>
-            <div className="rounded-2xl p-4 flex items-start gap-2.5 text-xs leading-relaxed" style={{ background: "#fff", border: `1px solid ${C.sagePale}`, color: C.ink60 }}>
-              <Info size={15} style={{ flexShrink: 0, marginTop: 1 }} />
-              <p>위 구간은 임상시험(그래프 디지타이징 기반 근사값)에서 관찰·추정된 평균적 누적 체중감량 경과를 참고하기 위한 값으로, 개인별 목표치나 안전 상한선이 아닙니다. 체중 변화에 대한 우려가 있다면 담당 의료진과 상의하세요.</p>
+            <div className="rounded-2xl p-4 flex flex-col gap-2 text-xs leading-relaxed" style={{ background: "#fff", border: `1px solid ${C.sagePale}`, color: C.ink60 }}>
+              <p>* <RichText text={weightResult.note} /></p>
+              <p>** {WEIGHT_COMMON_NOTE}</p>
             </div>
           </div>
         )}
