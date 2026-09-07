@@ -869,7 +869,9 @@ export default function App() {
   const [q3Idx, setQ3Idx] = useState([]);
   const [q4Idx, setQ4Idx] = useState(0);
   const [smellIdx, setSmellIdx] = useState([]);
+  const [smellAllOk, setSmellAllOk] = useState(false);
   const [tasteIdx, setTasteIdx] = useState([]);
+  const [tasteAllOk, setTasteAllOk] = useState(false);
   const [seasonIdx, setSeasonIdx] = useState(0);
   const [q8Grade, setQ8Grade] = useState(0);
 
@@ -953,8 +955,22 @@ export default function App() {
 
   const toggleIn = (setter) => (v) => setter((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]));
   const toggleTexture = toggleIn(setQ3Idx);
-  const toggleSmell = toggleIn(setSmellIdx);
-  const toggleTaste = toggleIn(setTasteIdx);
+  const toggleSmell = (v) => {
+    setSmellAllOk(false);
+    setSmellIdx((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]));
+  };
+  const toggleTaste = (v) => {
+    setTasteAllOk(false);
+    setTasteIdx((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]));
+  };
+  const setSmellChoices = (values) => {
+    setSmellAllOk(false);
+    setSmellIdx(values);
+  };
+  const setTasteChoices = (values) => {
+    setTasteAllOk(false);
+    setTasteIdx(values);
+  };
   const toggleFood = toggleIn(setFoodSelection);
 
   // 9단계 전체선택 — 지금 화면에 보이는 식품만 대상으로 한다
@@ -1022,7 +1038,7 @@ export default function App() {
     setGuideWeeks("");
     setGuideDiabetes("");
     setQ1Idx(0); setQ2Idx(0); setQ3Idx([]); setQ4Idx(0);
-    setSmellIdx([]); setTasteIdx([]); setSeasonIdx(0); setQ8Grade(0);
+    setSmellIdx([]); setSmellAllOk(false); setTasteIdx([]); setTasteAllOk(false); setSeasonIdx(0); setQ8Grade(0);
     setFoodSelection([]);
     setExpandedMenus({});
     setRandomSeed((s) => s + 1);
@@ -1042,6 +1058,30 @@ export default function App() {
     background: active ? activeBg : C.sagePale,
     color: active ? "#fff" : C.sageDeep,
   });
+
+  // 권고 결과 화면 아래에 두는 버튼 줄 (다시 선택 / 처음으로)
+  const guideResultFooter = (retryLabel = "다시 선택") => (
+    <div className="flex gap-3 justify-center">
+      <button
+        type="button"
+        onClick={() => setGuideAnswer(null)}
+        className="flex items-center gap-2 text-sm font-medium px-5 py-2.5 rounded-full"
+        style={{ background: C.sagePale, color: C.sageDeep }}
+      >
+        <ChevronLeft size={14} />
+        {retryLabel}
+      </button>
+      <button
+        type="button"
+        onClick={handleReset}
+        className="flex items-center gap-2 text-sm font-medium px-5 py-2.5 rounded-full"
+        style={{ background: C.sagePale, color: C.sageDeep }}
+      >
+        <RotateCcw size={14} />
+        처음으로
+      </button>
+    </div>
+  );
 
   // 복수선택 문항의 전체 선택 버튼.
   // 하나씩 더해보며 결과가 0개가 되는 선택지는 건너뛴다.
@@ -1152,7 +1192,7 @@ export default function App() {
           <div className="flex flex-col items-center text-center gap-8">
             <div>
               <span className="font-mono text-xs tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: C.sagePale, color: C.sageDeep }}>
-                GLP-1 케어 다이어리
+                GLP食(지엘피식)
               </span>
               <p className="mt-6 max-w-md text-base leading-relaxed mx-auto" style={{ color: C.ink60 }}>
                 GLP-1 복용자를 위한 오늘의 식사 선택과 맞춤 권고를 확인해보세요.
@@ -1185,7 +1225,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ===== 권고사항 흐름 (기존 그대로) ===== */}
+        {/* ===== 권고사항 흐름 ===== */}
         {flowType === "guide" && !guideCategory && (
           <div className="flex flex-col gap-6">
             <button type="button" onClick={handleReset} className="self-start flex items-center gap-1 text-sm font-medium" style={{ color: C.sageDeep }}>
@@ -1248,12 +1288,6 @@ export default function App() {
           const heading = (!Array.isArray(recommendation) && recommendation.title) || selected.label;
           return (
             <div className="flex flex-col gap-6">
-              <div className="flex items-center justify-between">
-                <button type="button" onClick={returnToGuideHome} className="flex items-center gap-1 text-sm font-medium" style={{ color: C.sageDeep }}>
-                  <ChevronLeft size={16} /> 권고사항 홈
-                </button>
-                <button type="button" onClick={() => setGuideAnswer(null)} className="text-sm font-medium" style={{ color: C.apricotDeep }}>다시 선택</button>
-              </div>
               <div className="rounded-3xl p-6 md:p-8" style={{ background: C.sagePale }}>
                 <p className="font-mono text-xs uppercase tracking-widest mb-3" style={{ color: C.sageDeep }}>RECOMMENDATION</p>
                 <h2 className="font-display text-2xl md:text-3xl font-semibold leading-snug">{heading}</h2>
@@ -1274,6 +1308,7 @@ export default function App() {
                   ))}
                 </ul>
               </div>
+              {guideResultFooter("다시 선택")}
             </div>
           );
         })()}
@@ -1328,12 +1363,6 @@ export default function App() {
 
         {flowType === "guide" && guideCategory === "weight" && guideAnswer && weightResult && (
           <div className="flex flex-col gap-6">
-            <div className="flex items-center justify-between">
-              <button type="button" onClick={returnToGuideHome} className="flex items-center gap-1 text-sm font-medium" style={{ color: C.sageDeep }}>
-                <ChevronLeft size={16} /> 권고사항 홈
-              </button>
-              <button type="button" onClick={() => setGuideAnswer(null)} className="text-sm font-medium" style={{ color: C.apricotDeep }}>다시 입력</button>
-            </div>
             <div className="rounded-3xl p-6 md:p-8" style={{ background: C.sagePale }}>
               <h2 className="font-display text-2xl md:text-3xl font-semibold leading-snug" style={{ color: C.ink }}>
                 {weightResult.lossRate >= 0
@@ -1358,6 +1387,7 @@ export default function App() {
               <p>* <RichText text={weightResult.note} /></p>
               <p>** {WEIGHT_COMMON_NOTE}</p>
             </div>
+            {guideResultFooter("다시 입력")}
           </div>
         )}
 
@@ -1400,7 +1430,7 @@ export default function App() {
         {flowType === "food" && currentStep === 5 && stepCard(
           "5단계: 냄새 민감도",
           "오늘 특히 민감하게 느껴지는 향이 있나요? (선택사항, 복수 선택)",
-          chipGroup("smellIdx", [1, 2, 3, 4, 5, 6], smellIdx, setSmellIdx, avail.q5,
+          chipGroup("smellIdx", [1, 2, 3, 4, 5, 6], smellIdx, setSmellChoices, avail.q5,
             SMELL_OPTIONS.map((label, i) => {
               const on = smellIdx.includes(i + 1);
               const off = !on && !avail.q5.has(i + 1);
@@ -1409,14 +1439,18 @@ export default function App() {
                   {label}
                 </button>
               );
-            })
+            }).concat(
+              <button key="smell-all-ok" type="button" onClick={() => { setSmellIdx([]); setSmellAllOk(true); }} className="chip px-3 py-2 rounded-full text-xs font-medium" style={chipStyle(smellAllOk, C.blue)}>
+                다 괜찮아요
+              </button>
+            )
           )
         )}
 
         {flowType === "food" && currentStep === 6 && stepCard(
           "6단계: 맛 민감도",
           "오늘 특히 민감하게 느껴지는 맛이 있나요? (선택사항, 복수 선택)",
-          chipGroup("tasteIdx", [1, 2, 3], tasteIdx, setTasteIdx, avail.q6,
+          chipGroup("tasteIdx", [1, 2, 3], tasteIdx, setTasteChoices, avail.q6,
             TASTE_OPTIONS.map((t, i) => {
               const on = tasteIdx.includes(i + 1);
               const off = !on && !avail.q6.has(i + 1);
@@ -1425,7 +1459,11 @@ export default function App() {
                   {t}
                 </button>
               );
-            })
+            }).concat(
+              <button key="taste-all-ok" type="button" onClick={() => { setTasteIdx([]); setTasteAllOk(true); }} className="chip px-4 py-2 rounded-full text-sm font-medium" style={chipStyle(tasteAllOk, C.blue)}>
+                다 괜찮아요
+              </button>
+            )
           )
         )}
 
