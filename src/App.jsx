@@ -795,7 +795,7 @@ function VitaminLegend() {
 }
 
 function MenuToggleCard({ item, selected, sauces, expanded, onToggle }) {
-  const matchedIngredients = item.ing.filter((i) => selected.includes(i[0]));
+  const matchedIngredients = [...new Set(item.ing.filter((i) => selected.includes(i[0])).map((i) => i[0]))];
   const vitamins = itemVitamins(item, selected);
   return (
     <div className="rounded-2xl overflow-hidden" style={{ background: "#fff", border: `1px solid ${C.sagePale}` }}>
@@ -823,7 +823,7 @@ function MenuToggleCard({ item, selected, sauces, expanded, onToggle }) {
             <p className="text-xs font-semibold mb-2" style={{ color: C.ink60 }}>고르신 식품 중 이 메뉴에 쓰이는 재료</p>
             {matchedIngredients.length > 0 ? (
               <div className="flex flex-wrap gap-x-3 gap-y-1.5">
-                {matchedIngredients.map((i) => <FoodLabel key={i[0]} name={i[0]} />)}
+                {matchedIngredients.map((n) => <FoodLabel key={n} name={n} />)}
               </div>
             ) : (
               <p className="text-xs" style={{ color: C.ink60 }}>메뉴 형태를 성립시키는 기본 베이스예요.</p>
@@ -956,6 +956,28 @@ export default function App() {
   const toggleSmell = toggleIn(setSmellIdx);
   const toggleTaste = toggleIn(setTasteIdx);
   const toggleFood = toggleIn(setFoodSelection);
+
+  // 9단계 전체선택 — 지금 화면에 보이는 식품만 대상으로 한다
+  const shownFoods = useMemo(
+    () => Object.values(foodCandidates).flat().map((f) => f.name),
+    [foodCandidates]
+  );
+  const allFoodsPicked = shownFoods.length > 0 && shownFoods.every((n) => foodSelection.includes(n));
+  const toggleAllFoods = () =>
+    setFoodSelection(allFoodsPicked ? [] : shownFoods);
+  const groupFoodNames = (group) => (foodCandidates[group] || []).map((f) => f.name);
+  const isGroupPicked = (group) => {
+    const names = groupFoodNames(group);
+    return names.length > 0 && names.every((n) => foodSelection.includes(n));
+  };
+  const toggleGroupFoods = (group) => {
+    const names = groupFoodNames(group);
+    setFoodSelection((prev) =>
+      names.every((n) => prev.includes(n))
+        ? prev.filter((n) => !names.includes(n))
+        : [...prev, ...names.filter((n) => !prev.includes(n))]
+    );
+  };
   const toggleExpandedMenu = (id) => setExpandedMenus((p) => ({ ...p, [id]: !p[id] }));
 
   const canProceedStep = () => {
@@ -1020,6 +1042,47 @@ export default function App() {
     background: active ? activeBg : C.sagePale,
     color: active ? "#fff" : C.sageDeep,
   });
+
+  // 복수선택 문항의 전체 선택 버튼.
+  // 하나씩 더해보며 결과가 0개가 되는 선택지는 건너뛴다.
+  // (예: 향을 전부 피하면 쓸 수 있는 양념이 사라져 추천이 비어버린다)
+  const selectAllChips = (key, values, current, setter, allowed) => {
+    const pickedAll = values.every((v) => current.includes(v) || (allowed && !allowed.has(v)));
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          if (pickedAll) {
+            setter([]);
+            return;
+          }
+          const next = [...current];
+          values.forEach((v) => {
+            if (next.includes(v)) return;
+            if (hasAnyCandidate({ ...answers, [key]: [...next, v] })) next.push(v);
+          });
+          setter(next);
+        }}
+        className="chip px-4 py-2 rounded-full text-xs font-medium"
+        style={chipStyle(pickedAll, C.apricot)}
+      >
+        {pickedAll ? "전체 해제" : "전체 선택"}
+      </button>
+    );
+  };
+
+  // 복수선택 문항 공통 레이아웃 — 선택 개수 + 전체 선택 버튼 + 칩 목록
+  const chipGroup = (key, values, current, setter, allowed, chips) => (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium">
+          {current.length > 0 ? `${current.length}개 선택함` : "아직 고른 항목이 없어요"}
+        </p>
+        {selectAllChips(key, values, current, setter, allowed)}
+      </div>
+      <div className="flex flex-wrap gap-2">{chips}</div>
+    </div>
+  );
 
   // 단일선택 목록을 그리는 공통 렌더러 (비활성 선택지는 이유와 함께 흐리게)
   const renderChoiceList = (options, value, onPick, allowed) => (
@@ -1315,8 +1378,8 @@ export default function App() {
         {flowType === "food" && currentStep === 3 && stepCard(
           "3단계: 식감 선호도",
           "오늘은 어떤 씹는 느낌이 좋을까요? (복수 선택)",
-          <div className="flex flex-wrap gap-2">
-            {TEXTURE_OPTIONS.map((t, i) => {
+          chipGroup("q3Idx", [1, 2, 3, 4, 5, 6, 7], q3Idx, setQ3Idx, avail.q3,
+            TEXTURE_OPTIONS.map((t, i) => {
               const on = q3Idx.includes(i + 1);
               const off = !on && !avail.q3.has(i + 1);
               return (
@@ -1324,8 +1387,8 @@ export default function App() {
                   {t}
                 </button>
               );
-            })}
-          </div>
+            })
+          )
         )}
 
         {flowType === "food" && currentStep === 4 && stepCard(
@@ -1337,8 +1400,8 @@ export default function App() {
         {flowType === "food" && currentStep === 5 && stepCard(
           "5단계: 냄새 민감도",
           "오늘 특히 민감하게 느껴지는 향이 있나요? (선택사항, 복수 선택)",
-          <div className="flex flex-wrap gap-2">
-            {SMELL_OPTIONS.map((label, i) => {
+          chipGroup("smellIdx", [1, 2, 3, 4, 5, 6], smellIdx, setSmellIdx, avail.q5,
+            SMELL_OPTIONS.map((label, i) => {
               const on = smellIdx.includes(i + 1);
               const off = !on && !avail.q5.has(i + 1);
               return (
@@ -1346,15 +1409,15 @@ export default function App() {
                   {label}
                 </button>
               );
-            })}
-          </div>
+            })
+          )
         )}
 
         {flowType === "food" && currentStep === 6 && stepCard(
           "6단계: 맛 민감도",
           "오늘 특히 민감하게 느껴지는 맛이 있나요? (선택사항, 복수 선택)",
-          <div className="flex flex-wrap gap-2">
-            {TASTE_OPTIONS.map((t, i) => {
+          chipGroup("tasteIdx", [1, 2, 3], tasteIdx, setTasteIdx, avail.q6,
+            TASTE_OPTIONS.map((t, i) => {
               const on = tasteIdx.includes(i + 1);
               const off = !on && !avail.q6.has(i + 1);
               return (
@@ -1362,8 +1425,8 @@ export default function App() {
                   {t}
                 </button>
               );
-            })}
-          </div>
+            })
+          )
         )}
 
         {flowType === "food" && currentStep === 7 && stepCard(
@@ -1391,15 +1454,40 @@ export default function App() {
             <div className="rounded-2xl p-3 flex items-start gap-2 text-xs leading-relaxed" style={{ background: C.sagePale, color: C.sageDeep }}>
               <Sparkles size={14} style={{ flexShrink: 0, marginTop: 1 }} />
               <span>
-                <strong>별표(★)</strong>는 이 시기에 부족해지기 쉬운 영양소를 채워주는 식품이라 식감 답변과 관계없이 항상 보여드려요.
+                <strong>별표(*)</strong>는 이 시기에 부족해지기 쉬운 영양소를 채워주는 식품이라 식감 답변과 관계없이 항상 보여드려요.
                 이름 뒤 <strong>(조리하면)</strong>이 붙은 식품은 조리 방법에 따라 그 식감이 되는 것들이고, 눌러서 조리 방법을 볼 수 있어요.
               </span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium">
+                {foodSelection.length > 0 ? `${foodSelection.length}가지 선택함` : "아직 고른 식품이 없어요"}
+                <span className="text-xs ml-1" style={{ color: C.ink60 }}>/ 전체 {shownFoods.length}가지</span>
+              </p>
+              <button
+                type="button"
+                onClick={toggleAllFoods}
+                className="chip px-4 py-2 rounded-full text-xs font-medium"
+                style={chipStyle(allFoodsPicked, C.apricot)}
+              >
+                {allFoodsPicked ? "전체 해제" : "전체 선택"}
+              </button>
             </div>
 
             <div className="flex flex-col gap-5">
               {FOOD_GROUP_ORDER.filter((g) => (foodCandidates[g] || []).length > 0).map((group) => (
                 <div key={group}>
-                  <p className="text-xs font-mono uppercase tracking-widest mb-2" style={{ color: C.ink60 }}>{group}</p>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-mono uppercase tracking-widest" style={{ color: C.ink60 }}>{group}</p>
+                    <button
+                      type="button"
+                      onClick={() => toggleGroupFoods(group)}
+                      className="text-xs font-medium"
+                      style={{ color: isGroupPicked(group) ? C.apricotDeep : C.sageDeep }}
+                    >
+                      {isGroupPicked(group) ? "이 그룹 해제" : "이 그룹 전체 선택"}
+                    </button>
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {foodCandidates[group].map((f) => {
                       const active = foodSelection.includes(f.name);
@@ -1412,7 +1500,7 @@ export default function App() {
                           className="chip px-3 py-2 rounded-full text-sm font-medium flex items-center gap-1"
                           style={{ ...chipStyle(active, C.apricot), opacity: f.tier === "base" || active ? 1 : 0.78 }}
                         >
-                          {f.essential && <span style={{ color: active ? "#fff" : C.apricotDeep }}>★</span>}
+                          {f.essential && <span style={{ color: active ? "#fff" : C.apricotDeep, fontWeight: 700 }}>*</span>}
                           <FoodLabel name={f.name} size="text-sm" />
                           {f.tier === "cook" && <span className="text-[10px] opacity-70">(조리하면)</span>}
                         </button>
@@ -1508,7 +1596,7 @@ export default function App() {
                 {randomMenus.map((m) => (
                   <div key={m.id} className="rounded-xl px-4 py-3" style={{ background: "#fff", border: `1px solid ${C.sagePale}` }}>
                     <p className="font-semibold text-sm">{m.name}</p>
-                    <p className="text-xs mt-1 leading-relaxed" style={{ color: C.ink60 }}>{m.ing.map((i) => i[0]).join(", ")}</p>
+                    <p className="text-xs mt-1 leading-relaxed" style={{ color: C.ink60 }}>{[...new Set(m.ing.map((i) => i[0]))].join(", ")}</p>
                   </div>
                 ))}
               </div>
