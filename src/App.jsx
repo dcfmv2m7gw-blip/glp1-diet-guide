@@ -250,6 +250,26 @@ const WEIGHT_STUDY_NOTES = {
 const WEIGHT_COMMON_NOTE =
   "제시된 수치는 개인별 목표치나 안전 상한선이 아닙니다. 각 임상시험에서 시험약을 지속적으로 사용한 조건에서 관찰·추정된 평균적 누적 체중감량 경과를 참고하기 위한 값으로 해석해야 합니다.";
 
+const WEIGHT_FIGURE_META = {
+  wegovy: {
+    noDiabetes: { figureNo: "Figure 1", tableNo: "Table 1", panel: "STEP 1 연구 B 패널", drug: "Semaglutide 2.4 mg", who: "제2형 당뇨병이 없는 성인" },
+    diabetes: { figureNo: "Figure 2", tableNo: "Table 2", panel: "STEP 2 연구 B 패널", drug: "Semaglutide 2.4 mg", who: "제2형 당뇨병이 있는 성인" },
+  },
+  mounjaro: {
+    noDiabetes: { figureNo: "Figure 3", tableNo: "Table 3", panel: "SURMOUNT-1 연구 B 패널", drug: "Tirzepatide", who: "제2형 당뇨병이 없는 성인" },
+    diabetes: { figureNo: "Figure 4", tableNo: "Table 4", panel: "SURMOUNT-2 연구 B 패널", drug: "Tirzepatide", who: "제2형 당뇨병이 있는 성인" },
+  },
+};
+
+// 표의 값은 숫자(고정값) 또는 [최소, 최대] 구간 두 가지 형태로 들어 있다
+const loOf = (v) => (Array.isArray(v) ? v[0] : v);
+const hiOf = (v) => (Array.isArray(v) ? v[1] : v);
+const midOf = (v) => (Array.isArray(v) ? (v[0] + v[1]) / 2 : v);
+
+// 용량별 선 색 (마운자로는 2~3개, 위고비는 1개)
+const SERIES_COLORS = [C.sageDeep, C.apricot, C.blue];
+const seriesLabel = (label) => (label === "관찰 구간" ? "평균 누적 체중감량률" : label);
+
 function findClosestWeekIndex(weeksArr, target) {
   let bestIdx = 0;
   let bestDiff = Infinity;
@@ -983,6 +1003,150 @@ function GuidePoint({ point }) {
   );
 }
 
+function WeightTrendChart({ table, userWeek, userRate }) {
+  const W = 480;
+  const H = 300;
+  const P = { l: 40, r: 14, t: 26, b: 42 };
+
+  const weeks = table.weeks;
+  const maxWeek = weeks[weeks.length - 1];
+  const entries = Object.entries(table.series);
+
+  const dataMax = Math.max(...entries.flatMap(([, vs]) => vs.map(hiOf)));
+  const yMax = Math.max(5, Math.ceil((dataMax + 2) / 5) * 5);
+
+  const x = (w) => P.l + (w / maxWeek) * (W - P.l - P.r);
+  const y = (v) => P.t + (v / yMax) * (H - P.t - P.b);
+
+  const yTicks = [];
+  for (let v = 0; v <= yMax; v += 5) yTicks.push(v);
+
+  const bandPath = (vs) =>
+    [
+      ...weeks.map((w, i) => `${i === 0 ? "M" : "L"}${x(w)},${y(hiOf(vs[i]))}`),
+      ...weeks.map((_, i) => {
+        const j = weeks.length - 1 - i;
+        return `L${x(weeks[j])},${y(loOf(vs[j]))}`;
+      }),
+      "Z",
+    ].join(" ");
+
+  const linePath = (vs) => weeks.map((w, i) => `${i === 0 ? "M" : "L"}${x(w)},${y(midOf(vs[i]))}`).join(" ");
+
+  // 내 위치는 그래프 범위 안에 들어올 때만 찍는다 (체중이 늘었거나 연구 기간을 넘으면 제외)
+  const userVisible =
+    Number.isFinite(userWeek) && Number.isFinite(userRate) &&
+    userWeek > 0 && userWeek <= maxWeek && userRate >= 0 && userRate <= yMax;
+
+  return (
+    <div>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: "block" }} role="img" aria-label="주차별 평균 누적 체중감량률 그래프">
+        <text x={6} y={12} fontSize={10} fill={C.ink60}>체중 변화(%)</text>
+
+        {yTicks.map((v) => (
+          <g key={v}>
+            <line
+              x1={P.l} x2={W - P.r} y1={y(v)} y2={y(v)}
+              stroke={v === 0 ? C.ink60 : C.sagePale}
+              strokeWidth={1}
+              strokeDasharray={v === 0 ? "4 3" : undefined}
+              opacity={v === 0 ? 0.5 : 1}
+            />
+            <text x={P.l - 6} y={y(v) + 4} textAnchor="end" fontSize={11} fill="#9A988E" fontFamily="IBM Plex Mono, monospace">
+              {v === 0 ? "0" : `-${v}`}
+            </text>
+          </g>
+        ))}
+
+        {entries.map(([label, vs], si) => {
+          const color = SERIES_COLORS[si % SERIES_COLORS.length];
+          return (
+            <g key={label}>
+              <path d={bandPath(vs)} fill={color} opacity={0.14} />
+              <path d={linePath(vs)} fill="none" stroke={color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+              {weeks.map((w, i) => (
+                <circle key={w} cx={x(w)} cy={y(midOf(vs[i]))} r={2.4} fill={color} />
+              ))}
+            </g>
+          );
+        })}
+
+        {userVisible && (
+          <g>
+            <circle cx={x(userWeek)} cy={y(userRate)} r={6} fill="#fff" stroke={C.apricotDeep} strokeWidth={2.5} />
+            <text x={x(userWeek)} y={y(userRate) - 11} textAnchor="middle" fontSize={11} fontWeight={700} fill={C.apricotDeep}>나</text>
+          </g>
+        )}
+
+        {weeks.map((w) => (
+          <text key={w} x={x(w)} y={H - P.b + 16} textAnchor="middle" fontSize={11} fill="#9A988E" fontFamily="IBM Plex Mono, monospace">
+            {w}
+          </text>
+        ))}
+        <text x={(P.l + W - P.r) / 2} y={H - 8} textAnchor="middle" fontSize={11} fill={C.ink60}>투여 주차</text>
+      </svg>
+
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
+        {entries.map(([label], i) => (
+          <span key={label} className="flex items-center gap-1.5 text-xs" style={{ color: C.ink60 }}>
+            <span style={{ width: 16, height: 3, borderRadius: 2, background: SERIES_COLORS[i % SERIES_COLORS.length], display: "inline-block" }} />
+            {seriesLabel(label)}
+          </span>
+        ))}
+        {userVisible && (
+          <span className="flex items-center gap-1.5 text-xs" style={{ color: C.apricotDeep }}>
+            <span style={{ width: 11, height: 11, borderRadius: "50%", background: "#fff", border: `2.5px solid ${C.apricotDeep}`, display: "inline-block" }} />
+            내 위치
+          </span>
+        )}
+      </div>
+
+      {!userVisible && (
+        <p className="text-xs mt-2" style={{ color: C.ink60 }}>
+          입력하신 주차·체중은 이 연구의 관찰 범위를 벗어나서 그래프에 표시하지 않았어요.
+        </p>
+      )}
+    </div>
+  );
+}
+
+// 주차별 누적 체중감량률 표. 비교 기준이 된 주차 행을 강조한다.
+function WeightTableView({ table, closestWeek }) {
+  const entries = Object.entries(table.series);
+  const cell = { padding: "7px 10px", borderBottom: `1px solid ${C.sagePale}` };
+  return (
+    <div className="overflow-x-auto rounded-2xl" style={{ border: `1px solid ${C.sagePale}`, background: "#fff" }}>
+      <table className="w-full text-xs" style={{ borderCollapse: "collapse", minWidth: entries.length > 1 ? 320 : 220 }}>
+        <thead>
+          <tr style={{ background: C.sagePale, color: C.sageDeep }}>
+            <th style={{ ...cell, textAlign: "left", fontWeight: 600 }}>주차</th>
+            {entries.map(([label]) => (
+              <th key={label} style={{ ...cell, textAlign: "right", fontWeight: 600 }}>
+                {entries.length > 1 ? label : "누적 체중감량률"}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {table.weeks.map((w, i) => {
+            const on = w === closestWeek;
+            return (
+              <tr key={w} style={{ background: on ? "#FFF3EC" : "transparent" }}>
+                <td className="font-mono" style={{ ...cell, color: on ? C.apricotDeep : C.ink60, fontWeight: on ? 700 : 400 }}>{w}</td>
+                {entries.map(([label, vs]) => (
+                  <td key={label} className="font-mono" style={{ ...cell, textAlign: "right", color: on ? C.apricotDeep : C.ink, fontWeight: on ? 700 : 400 }}>
+                    {rangeLabel(vs[i])}
+                  </td>
+                ))}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function VitaminLegend() {
   const keys = Object.keys(VITAMIN_META);
   return (
@@ -1158,7 +1322,14 @@ export default function App() {
       dose: label === "관찰 구간" ? "" : ` ${label}`,
       value: rangeLabel(values[idx]),
     }));
-    return { lossRate, closestWeek, averages, note: WEIGHT_STUDY_NOTES[guideDrug][key] };
+return {
+      lossRate,
+      closestWeek,
+      averages,
+      note: WEIGHT_STUDY_NOTES[guideDrug][key],
+      table,
+      meta: WEIGHT_FIGURE_META[guideDrug][key],
+    };
   }, [guideInitialWeight, guideCurrentWeight, guideDrug, guideWeeks, guideDiabetes]);
 
   // 각 단계에서 아직 고를 수 있는 선택지 (DB상 결과가 0개가 되는 선택은 막는다)
@@ -1765,6 +1936,36 @@ export default function App() {
                   입력하신 {guideWeeks || 0}주차와 가장 가까운 {weightResult.closestWeek}주차 자료로 비교했어요.
                 </p>
               )}
+            </div>
+<div className="rounded-3xl p-6 md:p-8 flex flex-col gap-7" style={{ background: C.card, border: `1px solid ${C.sagePale}` }}>
+              <div>
+                <h3 className="font-display text-lg font-semibold mb-1">임상시험 참고 자료</h3>
+                <p className="text-xs leading-relaxed" style={{ color: C.ink60 }}>
+                  {weightResult.meta.who}에게 {DRUG_SHORT[guideDrug]}를 투여한 {weightResult.meta.panel} 자료예요.
+                  그래프의 동그라미가 지금 내 위치예요.
+                </p>
+              </div>
+
+              <div>
+                <WeightTrendChart
+                  table={weightResult.table}
+                  userWeek={Number(guideWeeks)}
+                  userRate={weightResult.lossRate}
+                />
+                <p className="text-xs leading-relaxed mt-3" style={{ color: C.ink60 }}>
+                  <strong style={{ color: C.ink }}>{weightResult.meta.figureNo}.</strong>{" "}
+                  {weightResult.meta.who}에서 {weightResult.meta.drug} 투여에 따른 주차별 평균 체중변화: {weightResult.meta.panel}
+                </p>
+              </div>
+
+              <div>
+                <WeightTableView table={weightResult.table} closestWeek={weightResult.closestWeek} />
+                <p className="text-xs leading-relaxed mt-3" style={{ color: C.ink60 }}>
+                  <strong style={{ color: C.ink }}>{weightResult.meta.tableNo}.</strong>{" "}
+                  {weightResult.meta.who}에서 {weightResult.meta.drug} 투여에 따른 주차별 평균 누적 체중감량률:{" "}
+                  {weightResult.meta.panel} 그래프 디지타이징 추정치
+                </p>
+              </div>
             </div>
             <div className="rounded-2xl p-4 flex flex-col gap-2 text-xs leading-relaxed" style={{ background: "#fff", border: `1px solid ${C.sagePale}`, color: C.ink60 }}>
               <p>* <RichText text={weightResult.note} /></p>
