@@ -477,9 +477,21 @@ const STEP_LINKS = {
   form: { key: "form", label: "식사 형태 다시 고르기", step: 2 },
   texture: { key: "texture", label: "식감 조건 완화하기", step: 3 },
   temp: { key: "temp", label: "온도 다시 고르기", step: 4 },
+  smell: { key: "smell", label: "향 회피 완화하기", step: 5 },
+  taste: { key: "taste", label: "맛 회피 완화하기", step: 6 },
   season: { key: "season", label: "간과 풍미 완화하기", step: 7 },
   cook: { key: "cook", label: "조리 시간 늘리기", step: 8 },
   food: { key: "food", label: "식품 다시 고르기", step: 9 },
+};
+
+// blockingReasons()가 돌려주는 키 → 화면 표기 / 되돌아갈 문항
+const BLOCK_LABEL = { texture: "식감", temp: "온도", cook: "조리 시간", season: "간과 풍미", avoid: "향·맛 회피" };
+const BLOCK_LINK = {
+  texture: STEP_LINKS.texture,
+  temp: STEP_LINKS.temp,
+  cook: STEP_LINKS.cook,
+  season: STEP_LINKS.season,
+  avoid: STEP_LINKS.smell,
 };
 
 const GROUP_ICON = { rice: "🍚", table_main: "🍲", side: "🥗", main: "🍽️" };
@@ -516,6 +528,21 @@ function passesQ3Q4Q8(item, q3Idx, q4Idx, q8Grade) {
   if (q4.length > 0 && !q4.some((i) => bit(item.q4, i))) return false;
   if (q8Grade && q8Grade < item.q8min) return false;
   return true;
+}
+
+// 그 메뉴를 탈락시킨 문항이 무엇인지 되짚는다.
+// "고른 식품으로는 만들 수 있는데 다른 조건에 걸린" 경우를 정확히 안내하기 위한 함수.
+function blockingReasons(item, a) {
+  const out = [];
+  if (a.q3Idx.length > 0 && !a.q3Idx.some((i) => bit(item.q3, i))) out.push("texture");
+  const q4 = asIdxList(a.q4Idx);
+  if (q4.length > 0 && !q4.some((i) => bit(item.q4, i))) out.push("temp");
+  if (a.q8Grade && a.q8Grade < item.q8min) out.push("cook");
+  if (usableSauces(item.sauceIds, a.smellIdx, a.tasteIdx, a.seasonIdx).length === 0) {
+    // Q7(간과 풍미)만 풀어도 살아나면 Q7 탓, 그래도 0개면 Q5·Q6(향·맛 회피) 탓이다
+    out.push(usableSauces(item.sauceIds, a.smellIdx, a.tasteIdx, []).length > 0 ? "season" : "avoid");
+  }
+  return out;
 }
 
 function passesAll(item, a) {
@@ -690,13 +717,34 @@ function buildFoodPlan(answers, selected) {
   if (pool.length === 0) return { items: [], kind: "single", reason: "combo" };
   const picked = pickTop(pool, selected, answers, 3);
   if (picked.length === 0) {
-    // 다른 조건은 다 통과했는데 주재료 칸만 못 채운 경우엔 그 사실을 콕 집어 알려준다.
+    // ① 고른 식품으로 주재료 조건까지 만족하는 메뉴는 있는데,
+    //    식감·온도·간·조리시간 같은 다른 문항에 걸려 전부 빠진 경우.
+    //    이걸 먼저 확인하지 않으면 "주재료를 안 골랐다"는 엉뚱한 안내가 나간다.
+    //    (예: 현미·연어를 골랐는데 현미를 쓰는 덮밥이 식감 조건에서 전부 걸러지면,
+    //     남는 후보가 오트밀을 주재료 1로 쓰는 샐러드볼뿐이라 "주재료 1 미선택"으로 보인다)
+    const blockedByAnswers = pool.filter((m) => meetsMainRoles(m, selected) && !passesAll(m, answers));
+    if (blockedByAnswers.length > 0) {
+      const tally = {};
+      blockedByAnswers.forEach((m) => blockingReasons(m, answers).forEach((k) => { tally[k] = (tally[k] || 0) + 1; }));
+      const blocked = Object.entries(tally)
+        .sort((a, b) => b[1] - a[1])
+        .map(([key, count]) => ({ key, count }));
+      return { items: [], kind: "single", reason: "filtered", blocked, blockedCount: blockedByAnswers.length };
+    }
+    // ② 다른 조건은 통과했지만 주재료 칸을 못 채운 경우
     const nearMiss = pool.filter((m) => passesAll(m, answers) && !meetsMainRoles(m, selected));
     if (nearMiss.length > 0) {
       // 후보 전부에서 공통으로 비어 있는 칸만 짚어준다.
-      // (한 메뉴에서만 비어 있는 칸까지 말하면 이미 고른 재료까지 부족하다고 하게 된다)
       const needs = ["1", "2"].filter((role) => nearMiss.every((m) => missingMainRoles(m, selected).includes(role)));
-      if (needs.length > 0) return { items: [], kind: "single", reason: "mainRole", needs };
+      if (needs.length > 0) {
+        // 그 칸을 채울 수 있는 실제 식품 이름까지 알려준다.
+        // ("주재료 1을 안 골랐다"가 아니라 "남은 메뉴엔 오트밀이 필요하다"가 정확한 설명이다)
+        const options = {};
+        needs.forEach((role) => {
+          options[role] = uniq(nearMiss.flatMap((m) => m.ing.filter((i) => i[1] === role).map((i) => i[0])));
+        });
+        return { items: [], kind: "single", reason: "mainRole", needs, options };
+      }
     }
     return { items: [], kind: "single", reason: "empty" };
   }
@@ -1083,6 +1131,9 @@ export default function App() {
 
   const [foodSelection, setFoodSelection] = useState([]);
   const [expandedMenus, setExpandedMenus] = useState({});
+  // 결과 화면의 "…완화하기" 버튼으로 문항에 돌아온 상태인지.
+  // true면 각 문항에 "결과로 바로 가기" 지름길을 띄운다.
+  const [returnToResult, setReturnToResult] = useState(false);
   const [moreMenus, setMoreMenus] = useState([]);
   const [moreSeen, setMoreSeen] = useState(() => new Set());
 
@@ -1149,11 +1200,28 @@ export default function App() {
         return { text: "고르신 식사 형태에 해당하는 메뉴가 DB에 없어요. 다른 형태를 골라보세요.", jumps: [STEP_LINKS.form] };
       case "q1":
         return { text: "일반식 상차림은 밥·주찬·부찬을 갖춘 형태에서만 구성할 수 있어요.", jumps: [STEP_LINKS.form] };
-      case "mainRole":
+      case "filtered": {
+        const names = (plan.blocked || []).map((b) => BLOCK_LABEL[b.key]).filter(Boolean);
+        const jumps = [];
+        (plan.blocked || []).forEach((b) => {
+          const link = BLOCK_LINK[b.key];
+          if (link && !jumps.some((j) => j.key === link.key)) jumps.push(link);
+        });
         return {
-          text: `조건에 맞는 메뉴는 있는데, ${(plan.needs || []).map((r) => ROLE_LABEL[r]).join("와 ")}에 해당하는 식품을 아직 고르지 않으셨어요. 메뉴는 주재료 1과 주재료 2에서 각각 최소 한 가지가 있어야 만들 수 있어요.`,
-          jumps: [STEP_LINKS.food],
+          text: `고르신 식품으로 만들 수 있는 메뉴가 ${plan.blockedCount}가지 있는데, 오늘 고르신 ${names.join(" · ")} 조건에 걸려 모두 빠졌어요. 아래 조건을 완화하면 다시 나타나요.`,
+          jumps: jumps.length > 0 ? jumps : [STEP_LINKS.food],
         };
+      }
+      case "mainRole": {
+        const parts = (plan.needs || []).map((r) => {
+          const foods = (plan.options || {})[r] || [];
+          return foods.length > 0 ? `${ROLE_LABEL[r]}로 쓸 수 있는 식품(${foods.join(", ")})` : ROLE_LABEL[r];
+        });
+        return {
+          text: `지금 남은 후보 메뉴들은 ${parts.join("와 ")} 중 최소 한 가지가 필요한데 아직 고르지 않으셨어요. 다른 주재료를 이미 고르셨더라도, 그 식품을 쓰는 메뉴가 식감·온도·간·조리시간 조건에서 걸러졌을 수 있어요.`,
+          jumps: [STEP_LINKS.food, STEP_LINKS.texture, STEP_LINKS.season, STEP_LINKS.cook],
+        };
+      }
       case "empty":
         return {
           text: "고르신 조건과 식품으로 만들 수 있는 메뉴를 찾지 못했어요. 곡류·단백질 식품을 몇 가지 더 고르거나, 아래 조건을 조금 완화해 보세요.",
@@ -1252,6 +1320,18 @@ export default function App() {
   };
   const toggleExpandedMenu = (id) => setExpandedMenus((p) => ({ ...p, [id]: !p[id] }));
 
+  // 결과 화면을 그리는 데 필요한 답이 전부 남아 있는지
+  // (문항을 고치는 과정에서 뒤쪽 답이 자동으로 비워졌을 수 있다)
+  const allAnswered =
+    q2Idx > 0 &&
+    q3Idx.length > 0 &&
+    q4Idx.length > 0 &&
+    (smellIdx.length > 0 || smellAllOk) &&
+    (tasteIdx.length > 0 || tasteAllOk) &&
+    seasonIdx.length > 0 &&
+    q8Grade > 0 &&
+    foodSelection.length > 0;
+
   const canProceedStep = () => {
     if (flowType !== "food") return true;
     if (currentStep === 2) return q2Idx > 0;
@@ -1271,6 +1351,7 @@ export default function App() {
       alert("필수 정보를 모두 입력해주세요.");
       return;
     }
+    if (currentStep >= 9) setReturnToResult(false);
     setCurrentStep(currentStep < 9 ? currentStep + 1 : 101);
   };
 
@@ -1297,6 +1378,7 @@ export default function App() {
     setSmellIdx([]); setSmellAllOk(false); setTasteIdx([]); setTasteAllOk(false); setSeasonIdx([]); setQ8Grade(0);
     setFoodSelection([]);
     setExpandedMenus({});
+    setReturnToResult(false);
     setMoreMenus([]);
     setMoreSeen(new Set());
   };
@@ -1427,7 +1509,7 @@ export default function App() {
         <button
           key={j.key}
           type="button"
-          onClick={() => setCurrentStep(j.step)}
+          onClick={() => { setReturnToResult(true); setCurrentStep(j.step); }}
           className="chip flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full"
           style={{ background: C.sagePale, color: C.sageDeep }}
         >
@@ -1439,13 +1521,29 @@ export default function App() {
   );
 
   const navButtons = (nextLabel = "다음") => (
-    <div className="flex gap-3 pt-4">
-      <button type="button" onClick={handlePrev} className="px-6 py-2.5 rounded-full font-medium" style={{ background: C.sagePale, color: C.sageDeep }}>
-        <ChevronLeft size={16} className="inline mr-1" />이전
-      </button>
-      <button type="button" onClick={handleNext} className="flex-1 py-2.5 rounded-full font-medium text-white" style={{ background: C.apricot }}>
-        {nextLabel}<ChevronRight size={16} className="inline ml-1" />
-      </button>
+    <div className="flex flex-col gap-3 pt-4">
+      {returnToResult && currentStep < 9 && (
+        <button
+          type="button"
+          onClick={() => { setReturnToResult(false); setCurrentStep(101); }}
+          disabled={!allAnswered}
+          className="py-2.5 rounded-full text-sm font-medium disabled:opacity-40"
+          style={{ background: C.sagePale, color: C.sageDeep }}
+        >
+          {allAnswered
+            ? "결과로 바로 가기"
+            : "뒤쪽 문항 답이 지워졌어요 — 다음을 눌러 이어가주세요"}
+          {allAnswered && <ChevronRight size={14} className="inline ml-1" />}
+        </button>
+      )}
+      <div className="flex gap-3">
+        <button type="button" onClick={handlePrev} className="px-6 py-2.5 rounded-full font-medium" style={{ background: C.sagePale, color: C.sageDeep }}>
+          <ChevronLeft size={16} className="inline mr-1" />이전
+        </button>
+        <button type="button" onClick={handleNext} className="flex-1 py-2.5 rounded-full font-medium text-white" style={{ background: C.apricot }}>
+          {nextLabel}<ChevronRight size={16} className="inline ml-1" />
+        </button>
+      </div>
     </div>
   );
 
