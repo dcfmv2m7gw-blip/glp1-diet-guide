@@ -261,6 +261,59 @@ const WEIGHT_FIGURE_META = {
   },
 };
 
+// ══════════════════════════════════════════════════════════════════
+// 1인_1회_분량_칼로리별_섭취량_표.docx 원본 그대로 옮긴 참고자료
+// ══════════════════════════════════════════════════════════════════
+const PORTION_REFERENCE = {
+  footnote: "*표시는 0.3회, †표시는 0.5회",
+  source: "출처: 2020 한국인 영양소 섭취기준 활용, 보건복지부/한국영양학회, 2020",
+  groups: [
+    { name: "곡류", icon: "🍚", items: [
+      { name: "쌀밥", amount: "210g" },
+      { name: "국수(말린 것)", amount: "90g" },
+      { name: "식빵 1쪽*", amount: "35g" },
+    ]},
+    { name: "고기·생선·달걀·콩류", icon: "🍗", items: [
+      { name: "쇠고기", amount: "생 60g" },
+      { name: "닭고기", amount: "생 60g" },
+      { name: "고등어", amount: "생 70g" },
+      { name: "달걀", amount: "60g" },
+    ]},
+    { name: "채소류", icon: "🥬", items: [
+      { name: "콩나물", amount: "생 70g" },
+      { name: "시금치", amount: "생 70g" },
+      { name: "배추김치", amount: "생 40g" },
+    ]},
+    { name: "과일류", icon: "🍎", items: [
+      { name: "사과", amount: "100g" },
+      { name: "귤", amount: "100g" },
+      { name: "포도", amount: "100g" },
+    ]},
+    { name: "우유·유제품류", icon: "🥛", items: [
+      { name: "우유", amount: "200ml" },
+      { name: "치즈 1장†", amount: "20g" },
+      { name: "호상요구르트", amount: "100g" },
+    ]},
+    { name: "유지·당류", icon: "🫒", items: [
+      { name: "콩기름 1작은술", amount: "5g" },
+      { name: "버터 1작은술", amount: "5g" },
+      { name: "마요네즈 1작은술", amount: "5g" },
+    ]},
+  ],
+};
+
+const CALORIE_PATTERN = {
+  title: "권장식사패턴(섭취횟수)",
+  columns: ["곡류", "고기·생선·달걀·콩류", "채소류", "과일류", "우유·유제품류", "유지·당류"],
+  rows: [
+    { kcal: "1,200", values: ["2", "2", "5", "1", "1", "3"] },
+    { kcal: "1,500", values: ["2.5", "2.5", "6", "1", "1", "4"] },
+    { kcal: "1,800", values: ["3", "3.5", "7", "2", "1", "4"] },
+  ],
+  source: "출처: 2020 한국인 영양소 섭취기준 활용, 보건복지부/한국영양학회, 2020",
+};
+
+
 // 표의 값은 숫자(고정값) 또는 [최소, 최대] 구간 두 가지 형태로 들어 있다
 const loOf = (v) => (Array.isArray(v) ? v[0] : v);
 const hiOf = (v) => (Array.isArray(v) ? v[1] : v);
@@ -1159,6 +1212,82 @@ function VitaminLegend() {
       ))}
       {"  — 이 영양소가 든 식품에는 색과 모양으로 표시했어요."}
     </p>
+  );
+}
+
+// docx 원본 "1인 1회 분량" 표 + "권장식사패턴" 표를 접었다 펼치는 카드로 보여준다
+function PortionReferenceCard() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-3xl overflow-hidden" style={{ background: C.card, border: `1px solid ${C.sagePale}` }}>
+      <button type="button" onClick={() => setOpen(!open)} className="w-full flex items-center gap-3 px-6 py-5 md:px-8 md:py-6 text-left">
+        <div className="flex items-center justify-center rounded-xl flex-shrink-0" style={{ width: 44, height: 44, fontSize: 22, background: C.sagePale }}>
+          🍽️
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-display text-lg font-semibold">한 끼, 얼마나 드시면 될까요?</p>
+          <p className="text-xs mt-1" style={{ color: C.ink60 }}>식품군별 1인 1회 분량 예시 자료 (참고용)</p>
+        </div>
+        {open ? <ChevronUp size={18} style={{ color: C.ink60 }} /> : <ChevronDown size={18} style={{ color: C.ink60 }} />}
+      </button>
+      {open && (
+        <div className="px-6 pb-6 md:px-8 md:pb-8 flex flex-col gap-6" style={{ borderTop: `1px solid ${C.sagePale}` }}>
+          <div className="rounded-2xl p-4 mt-6 flex items-start gap-2.5 text-xs leading-relaxed" style={{ background: "#fff", border: `1px solid ${C.sagePale}`, color: C.ink60 }}>
+            <Info size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+            <p>정해진 섭취량이 아니라, 식품군별로 "1회 분량"이 대략 어느 정도인지 감을 잡기 위한 참고 자료예요.</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {PORTION_REFERENCE.groups.map((g) => (
+              <div key={g.name} className="rounded-2xl p-4" style={{ background: "#fff", border: `1px solid ${C.sagePale}` }}>
+                <p className="text-xs font-semibold flex items-center gap-1.5 mb-3" style={{ color: C.sageDeep }}>
+                  <span>{g.icon}</span>{g.name}
+                </p>
+                <ul className="flex flex-col gap-2">
+                  {g.items.map((it) => (
+                    <li key={it.name} className="flex items-baseline justify-between text-sm gap-3">
+                      <span>{it.name}</span>
+                      <span className="font-mono text-xs flex-shrink-0" style={{ color: C.ink60 }}>{it.amount}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-xs leading-relaxed" style={{ color: C.ink60 }}>
+            {PORTION_REFERENCE.footnote}<br />{PORTION_REFERENCE.source}
+          </p>
+
+          <div>
+            <p className="font-display text-base font-semibold mb-3">{CALORIE_PATTERN.title}</p>
+            <div className="overflow-x-auto rounded-2xl" style={{ border: `1px solid ${C.sagePale}`, background: "#fff" }}>
+              <table className="w-full text-xs" style={{ borderCollapse: "collapse", minWidth: 520 }}>
+                <thead>
+                  <tr style={{ background: C.sagePale, color: C.sageDeep }}>
+                    <th style={{ padding: "8px 10px", textAlign: "left", fontWeight: 600 }}>열량(kcal)</th>
+                    {CALORIE_PATTERN.columns.map((c) => (
+                      <th key={c} style={{ padding: "8px 10px", textAlign: "right", fontWeight: 600 }}>{c}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {CALORIE_PATTERN.rows.map((r) => (
+                    <tr key={r.kcal}>
+                      <td className="font-mono" style={{ padding: "7px 10px", fontWeight: 600, borderTop: `1px solid ${C.sagePale}` }}>{r.kcal}</td>
+                      {r.values.map((v, i) => (
+                        <td key={i} className="font-mono" style={{ padding: "7px 10px", textAlign: "right", borderTop: `1px solid ${C.sagePale}` }}>{v}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-xs leading-relaxed mt-2" style={{ color: C.ink60 }}>{CALORIE_PATTERN.source}</p>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -2150,7 +2279,7 @@ return {
                           onClick={() => toggleFood(f.name)}
                           title={f.hint ? `이렇게 조리하면 그 식감이 돼요: ${f.hint}` : undefined}
                           className="chip px-3 py-2 rounded-full text-sm font-medium flex items-center gap-1"
-                          style={{ ...chipStyle(active, C.apricot), opacity: f.tier === "base" || active ? 1 : 0.78 }}
+                          style={chipStyle(active, C.apricot)}
                         >
                           {f.essential && <span style={{ color: active ? "#fff" : C.apricotDeep, fontWeight: 700 }}>*</span>}
                           <FoodLabel name={f.name} size="text-sm" />
@@ -2280,6 +2409,8 @@ return {
                 </p>
               )}
             </div>
+
+            <PortionReferenceCard />
 
             <div className="rounded-2xl p-4 flex items-start gap-2.5 text-xs leading-relaxed" style={{ background: "#fff", border: `1px solid ${C.sagePale}`, color: C.ink60 }}>
               <Info size={15} style={{ flexShrink: 0, marginTop: 1 }} />
