@@ -1486,11 +1486,9 @@ export default function App() {
 
   const chipGroup = (key, values, current, setter, allowed, chips, labels, allOk) => {
     const visibleValues = values.filter((v) => !allowed || allowed.has(v) || current.includes(v));
-    const blocked = allowed ? values.filter((v) => !allowed.has(v) && !current.includes(v)) : [];
-    const visibleChips = visibleValues.map((v) => {
-      const i = v - 1;
-      return chips[i];
-    });
+    const visibleChips = visibleValues.map((v) => chips[v - 1]);
+    const specialChip = chips.length > values.length ? chips[values.length] : null;
+    if (specialChip) visibleChips.push(specialChip);
     return (
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
@@ -1498,15 +1496,6 @@ export default function App() {
           {selectAllChips(key, values, current, setter, allowed)}
         </div>
         <div className="flex flex-wrap gap-2">{visibleChips}</div>
-        {blocked.length > 0 && labels && (
-          <div className="rounded-xl p-3 flex items-start gap-2 text-xs leading-relaxed" style={{ background: "#fff", border: `1px solid ${C.apricot}55`, color: C.ink60 }}>
-            <AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1, color: C.apricot }} />
-            <span>
-              지금까지 고른 조건으로는 만들 수 있는 메뉴가 없어서 아래 선택지는 고를 수 없어요.
-              <span className="block mt-1" style={{ color: C.ink }}>{blocked.map((v) => labels[v - 1]).join(" · ")}</span>
-            </span>
-          </div>
-        )}
       </div>
     );
   };
