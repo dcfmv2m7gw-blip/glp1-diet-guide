@@ -1504,28 +1504,30 @@ export default function App() {
     );
   };
 
-  const renderChoiceList = (options, value, onPick, allowed) => (
-    <div className="flex flex-col gap-3">
-      {options.map((label, i) => {
-        const idx = i + 1;
-        const disabled = allowed && !allowed.has(idx);
-        const active = value === idx;
-        return (
-          <button
-            key={label}
-            type="button"
-            disabled={disabled}
-            onClick={() => onPick(idx)}
-            className="p-4 rounded-xl text-left text-sm font-medium transition-all"
-            style={{ background: active ? C.apricot : "#fff", color: active ? "#fff" : disabled ? "#B7B4AA" : C.ink, border: `1px solid ${active ? C.apricot : C.sagePale}`, cursor: disabled ? "not-allowed" : "pointer" }}
-          >
-            {idx}. {label}
-            {disabled && <span className="block text-xs mt-1">지금까지 고른 조건으로는 만들 수 있는 메뉴가 없어요</span>}
-          </button>
-        );
-      })}
-    </div>
-  );
+  const renderChoiceList = (options, value, onPick, allowed) => {
+    const visibleOptions = !allowed ? options.map((label, i) => ({ label, idx: i + 1 })) : options
+      .map((label, i) => ({ label, idx: i + 1 }))
+      .filter(({ idx }) => allowed.has(idx));
+
+    return (
+      <div className="flex flex-col gap-3">
+        {visibleOptions.map(({ label, idx }, visibleIndex) => {
+          const active = value === idx;
+          return (
+            <button
+              key={label}
+              type="button"
+              onClick={() => onPick(idx)}
+              className="p-4 rounded-xl text-left text-sm font-medium transition-all"
+              style={{ background: active ? C.apricot : "#fff", color: active ? "#fff" : C.ink, border: `1px solid ${active ? C.apricot : C.sagePale}`, cursor: "pointer" }}
+            >
+              {visibleIndex + 1}. {label}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
 
   const StepJumpButtons = ({ jumps }) => (
     <div className="flex flex-wrap gap-2">
