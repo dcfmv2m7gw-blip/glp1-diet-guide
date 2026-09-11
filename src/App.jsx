@@ -1461,14 +1461,16 @@ export default function App() {
   );
 
   const selectAllChips = (key, values, current, setter, allowed) => {
-    const pickedAll = values.every((v) => current.includes(v) || (allowed && !allowed.has(v)));
+    const visibleValues = values.filter((v) => !allowed || allowed.has(v) || current.includes(v));
+    if (visibleValues.length === 0) return null;
+    const pickedAll = visibleValues.every((v) => current.includes(v));
     return (
       <button
         type="button"
         onClick={() => {
           if (pickedAll) { setter([]); return; }
           const next = [...current];
-          values.forEach((v) => {
+          visibleValues.forEach((v) => {
             if (next.includes(v)) return;
             if (!allowed || multiOptionEnabled({ ...answers, [key]: next }, key, v)) next.push(v);
           });
@@ -1483,14 +1485,19 @@ export default function App() {
   };
 
   const chipGroup = (key, values, current, setter, allowed, chips, labels, allOk) => {
+    const visibleValues = values.filter((v) => !allowed || allowed.has(v) || current.includes(v));
     const blocked = allowed ? values.filter((v) => !allowed.has(v) && !current.includes(v)) : [];
+    const visibleChips = visibleValues.map((v) => {
+      const i = v - 1;
+      return chips[i];
+    });
     return (
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium">{current.length > 0 ? `${current.length}개 선택함` : allOk ? "다 괜찮다고 답하셨어요" : "아직 고른 항목이 없어요"}</p>
           {selectAllChips(key, values, current, setter, allowed)}
         </div>
-        <div className="flex flex-wrap gap-2">{chips}</div>
+        <div className="flex flex-wrap gap-2">{visibleChips}</div>
         {blocked.length > 0 && labels && (
           <div className="rounded-xl p-3 flex items-start gap-2 text-xs leading-relaxed" style={{ background: "#fff", border: `1px solid ${C.apricot}55`, color: C.ink60 }}>
             <AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1, color: C.apricot }} />
