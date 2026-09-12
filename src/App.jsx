@@ -337,7 +337,7 @@ const CALORIE_PATTERN = {
 };
 
 // ══════════════════════════════════════════════════════════════════
-// 새 5문항 (2026-09 개정)
+// 5문항 (2026-09 개정 / typeB 2026-09-11 반영)
 // 배열 인덱스 0 = 선택지 1번. DB의 비트문자열과 자리수가 1:1로 대응한다.
 // ══════════════════════════════════════════════════════════════════
 const Q1_TEXTURE = ["치아로 씹어 먹고 싶어요", "혀와 입천장으로 쉽게 으깰 수 있는 느낌이 좋아요", "1,2번 다 별로예요"];
@@ -346,23 +346,26 @@ const Q3_SMELL = ["수산물의 비린내는 피하고 싶어요", "고기의 �
 const Q4_SEASONING = ["재료 본연의 맛을 즐길래요", "담백하고 삼삼하게 먹고 싶어요", "양념이 필요해요"];
 const Q5_COOKTIME = ["바로 먹을래요", "데우기만 하고 먹을래요", "15분 이내로 조리해서 먹을래요", "조리할 시간이 충분해요"];
 
+// 결과 화면 요약 문장에 쓰는 짧은 표현
+const Q1_SHORT = ["치아로 씹는 식감", "혀와 입천장으로 으깨는 식감", "씹기도 으깨기도 부담스러운 상태"];
+const Q2_SHORT = ["마시는 형태", "쉽게 떠먹는 형태", "핑거푸드", "혼합형 한그릇", "반찬을 포함한 일반식"];
+const Q3_SHORT = ["수산물 비린내", "고기 누린내", "발효·숙성 향", "마늘·양파 향", "오이·수박 향"];
+const Q4_SHORT = ["재료 본연의 맛", "담백하고 삼삼한 간", "양념이 있는 맛"];
+const Q5_SHORT = ["바로 먹기", "데우기만 하기", "15분 이내 조리", "충분히 조리하기"];
+
 // [정민 파트] 엑셀에 담기지 않아 코드로 처리하는 부분 ①
 // Q3-5(오이·수박 향)를 고른 사용자에게는, 메뉴명에 오이가 없더라도(예: 비빔밥)
 // 재료 목록에 오이가 들어간 메뉴가 있으므로 식품 목록에서 해당 식품을 숨긴다.
-// 다른 회피 항목은 메뉴 단위 Q3 코딩으로 이미 걸러지므로 비워 둔다.
 const Q3_HIDE_FOODS = { 1: [], 2: [], 3: [], 4: [], 5: ["오이", "수박"] };
 
 // [채민 파트] "이렇게도 먹어볼 수 있어요" 존에 추가로 띄울 식품
-//  · Q1=2(혀·입천장으로 으깨기) → "식품군별 플랫폼 추천 식재료" 표의 빨간 글씨 식품
-//  · Q1=3(둘 다 별로)          → 달걀, 두부 + 필수영양소 보유 식품(ESSENTIAL_FOODS)
 const EXTRA_FOODS_BY_Q1 = {
   1: [],
   2: ["백미", "고구마", "달걀", "두부", "굴", "게", "단호박", "무"],
   3: ["달걀", "두부"],
 };
 
-// 화면에서만 감출 선택지. DB는 건드리지 않으므로, 여기서 막은 조합의 메뉴도
-// 다른 경로로 들어오면 결과에는 정상적으로 나온다.
+// 화면에서만 감출 선택지. DB는 건드리지 않는다.
 //  · Q1=2에서 Q2=1(마시는 형태)  — 계란 수프 1개만 걸려 있어 선택지로 띄우지 않는다
 //  · Q1=3 & Q2=2에서 Q4=3(양념 필요) — 메뉴 1개만 걸려 있어 선택지로 띄우지 않는다
 const OPTION_HIDE = [
@@ -456,7 +459,6 @@ const FOOD_CAUTIONS = [
 
 // [정민 파트 ②] Q3-3(발효·숙성 향) → S010·S011 제외
 //               Q3-4(마늘·양파 향) → S005·S011·S013 제외
-// 02_양념DB의 충돌 열이 위 목록과 정확히 일치하므로 그 열을 그대로 쓴다.
 function sauceAllowedBySmell(s, smellIdx) {
   if (smellIdx.includes(3) && s.c3 === 1) return false;
   if (smellIdx.includes(4) && s.c4 === 1) return false;
@@ -469,8 +471,6 @@ function usableSauces(sauceIds, smellIdx) {
 
 // 결과 화면에 띄울 양념. 간·풍미(Q4)에 맞는 것을 우선 보여주되,
 // 하나도 없으면 향 조건만 통과한 양념을 그대로 보여준다.
-// (typeA의 Q4 코딩은 양념에서 기계적으로 유도된 값이 아니라 메뉴 단위 수작업 값이라,
-//  양념 Q4로 한 번 더 거르면 표시할 양념이 사라지는 메뉴가 생긴다)
 function displaySauces(sauceIds, smellIdx, seasonIdx) {
   const base = usableSauces(sauceIds, smellIdx);
   if (seasonIdx.length === 0) return base;
@@ -479,18 +479,12 @@ function displaySauces(sauceIds, smellIdx, seasonIdx) {
 }
 
 // typeA 메뉴 통과 판정.
-//  Q1·Q2·Q5 = 단일선택이라 해당 비트가 1이어야 한다
-//  Q3 = 복수선택 AND (고른 회피 조건을 모두 만족해야 함)
-//  Q4 = 복수선택 OR  (고른 간·풍미 중 하나라도 되면 통과)
 function passesMenu(m, a) {
   if (a.q1Idx && !bit(m.q1, a.q1Idx)) return false;
   if (a.q2Idx && !bit(m.q2, a.q2Idx)) return false;
   if (!a.smellIdx.every((i) => bit(m.q3, i))) return false;
   if (a.seasonIdx.length > 0 && !a.seasonIdx.some((i) => bit(m.q4, i))) return false;
   if (a.q5Idx && !bit(m.q5, a.q5Idx)) return false;
-  // 향 조건을 모두 만족하는 양념이 실제로 한 개는 남아야 한다.
-  // (Q3_3은 A양념으로, Q3_4는 B양념으로 각각 통과하지만 둘을 동시에 만족하는
-  //  양념은 없는 메뉴가 있어서, 메뉴 비트만으로는 걸러지지 않는다)
   return usableSauces(m.sauceIds, a.smellIdx).length > 0;
 }
 
@@ -500,7 +494,7 @@ function passesMenu(m, a) {
 // Q4_1 재료본연  : 모든 양념이 무양념(S001)
 // Q4_2 담백삼삼  : S001을 뺀 나머지가 1개 이상이고 전부 담백
 // Q4_3 양념필요  : 양념 중 하나라도 '양념필요'
-// → 98,455행 전수 대조에서 100% 일치함을 확인
+// → 2026-09-11 typeB_DB 98,455행 전수 대조에서 100% 일치함을 재확인
 const Q3ING_SLOT = { 1: 1, 2: 2, 5: 3 };
 
 function subPassesSmell(sub, smellIdx) {
@@ -511,8 +505,6 @@ function subPassesSmell(sub, smellIdx) {
   return usableSauces(sub.sauceIds, smellIdx).length > 0;
 }
 
-// 구성요소별로 쓸 수 있는 양념 목록이 주어졌을 때, 고른 간·풍미를 만족하는
-// 양념 조합이 존재하는지 확인한다.
 function seasoningFeasible(sauceSets, seasonIdx) {
   if (seasonIdx.length === 0) return sauceSets.every((L) => L.length > 0);
   return seasonIdx.some((opt) => {
@@ -525,8 +517,7 @@ function seasoningFeasible(sauceSets, seasonIdx) {
   });
 }
 
-// ── 주재료 규칙 (기존 유지) ──────────────────────────────────────
-// 메뉴가 실제로 가진 주재료 칸만 대상으로, 각 칸에서 최소 1개가 선택돼야 한다.
+// ── 주재료 규칙 ──────────────────────────────────────────────────
 function mainRoleSlots(item) {
   return ["1", "2"].filter((r) => item.ing.some((i) => i[1] === r));
 }
@@ -610,20 +601,55 @@ function pickRice(selected) {
   };
 }
 
-// 상차림 한 벌을 만든다. 밥이 주재료 1(곡류)을, 국·찌개·주찬·부찬이 주재료 2를 맡는다.
+// 예전에는 "주찬을 먼저 뽑고 → 부찬을 붙인 뒤 → 간·풍미를 확인"하는 순서라,
+// 조합만 바꿨으면 성립했을 한상까지 통째로 버려졌다.
+// (특히 일반식 + '담백하고 삼삼하게'에서 결과가 비는 문제가 있었다)
+// 이제 순위 상위 후보 안에서 (주찬 × 부찬조합)을 훑어 실제로 성립하는 첫 조합을 쓴다.
+const TABLE_SEARCH = 14;
+
+function sideCombos(pool) {
+  const out = [];
+  for (let i = 0; i < pool.length; i++) {
+    for (let j = i + 1; j < pool.length; j++) {
+      if (pool[i].name !== pool[j].name) out.push([pool[i], pool[j]]);
+    }
+    out.push([pool[i]]);
+  }
+  return out;
+}
+
 function buildTable(answers, selected) {
   const rice = pickRice(selected);
   const subPass = (m, a) => subPassesSmell(m, a.smellIdx);
+  const sauceOf = (p) => usableSauces(p.sauceIds, answers.smellIdx);
+
   const built = TABLE_SETTINGS.map((t) => {
-    const mainPool = SUBS.filter((m) => t.mainForms.includes(m.formId));
-    const sidePool = SUBS.filter((m) => t.sideForms.includes(m.formId));
-    const main = pickTop(mainPool, selected, answers, 1, subPass)[0];
-    if (!main) return null;
-    const sides = pickTop(sidePool, selected, answers, 2, subPass, mainFoodsOf(main));
-    if (sides.length === 0) return null;
-    const parts = [main, ...sides];
-    const sauceSets = parts.map((p) => usableSauces(p.sauceIds, answers.smellIdx));
-    if (!seasoningFeasible(sauceSets, answers.seasonIdx)) return null;
+    const mains = rankItems(SUBS.filter((m) => t.mainForms.includes(m.formId)), selected, answers, subPass).slice(0, TABLE_SEARCH);
+    const sidesAll = rankItems(SUBS.filter((m) => t.sideForms.includes(m.formId)), selected, answers, subPass).slice(0, TABLE_SEARCH);
+    if (mains.length === 0 || sidesAll.length === 0) return null;
+
+    let found = null;
+    for (const main of mains) {
+      const mainFoods = new Set(mainFoodsOf(main));
+      // 주찬과 주재료가 완전히 겹치는 부찬은 뒤로 미룬다
+      const fresh = sidesAll.filter((s) => {
+        const f = mainFoodsOf(s);
+        return f.length === 0 || !f.every((x) => mainFoods.has(x));
+      });
+      for (const pool of [fresh, sidesAll]) {
+        if (pool.length === 0) continue;
+        for (const combo of sideCombos(pool)) {
+          if (!seasoningFeasible([main, ...combo].map(sauceOf), answers.seasonIdx)) continue;
+          found = { main, sides: combo };
+          break;
+        }
+        if (found) break;
+      }
+      if (found) break;
+    }
+    if (!found) return null;
+
+    const { main, sides } = found;
     const items = [
       { ...rice, label: "밥" },
       { ...main, kind: "table_main", label: t.mainRoleLabel },
@@ -648,15 +674,12 @@ function buildFoodPlan(answers, selected) {
     return { items: built[0].items, kind: "table", setting: built[0].setting, riceFallback: rice.fallback, reason: null };
   }
 
-  // 그 외 → typeA 단독 완성 메뉴
   const pool = MENUS.filter((m) => bit(m.q1, q1Idx) && bit(m.q2, q2Idx));
   if (pool.length === 0) return { items: [], kind: "single", reason: "combo" };
   const picked = pickTop(pool, selected, answers, 3, passesMenu);
   if (picked.length === 0) {
-    // ① 주재료 조건은 만족하는데 향·간·조리시간에 걸려 전부 빠진 경우
     const blocked = pool.filter((m) => meetsMainRoles(m, selected) && !passesMenu(m, answers));
     if (blocked.length > 0) return { items: [], kind: "single", reason: "filtered", blockedCount: blocked.length };
-    // ② 다른 조건은 통과했지만 주재료 칸을 못 채운 경우
     const nearMiss = pool.filter((m) => passesMenu(m, answers) && !meetsMainRoles(m, selected));
     if (nearMiss.length > 0) {
       const needs = ["1", "2"].filter((role) => nearMiss.every((m) => missingMainRoles(m, selected).includes(role)));
@@ -672,11 +695,9 @@ function buildFoodPlan(answers, selected) {
 }
 
 // ── 선지 노출 판정 ──────────────────────────────────────────
-// 화면구성 메모의 "선지만 보여주기"는 결국 "그 선택지로 남는 메뉴가 하나라도 있는가"이다.
-// 분기표를 손으로 박아두면 DB가 바뀔 때마다 어긋나므로, 매번 DB에서 계산한다.
+// 결과가 하나도 나오지 않는 선택지는 화면에서 아예 지운다(안내 문구도 띄우지 않는다).
 function hasAnyCandidate(a) {
   if (a.q2Idx === 5) {
-    // 상차림은 Q1=1에서만 성립한다(typeA에 Q2_5=1인 메뉴가 없고 typeB가 이를 대신한다)
     if (a.q1Idx && a.q1Idx !== 1) return false;
     return TABLE_SETTINGS.some((t) => {
       const mains = SUBS.filter((m) => t.mainForms.includes(m.formId) && subPassesSmell(m, a.smellIdx));
@@ -707,15 +728,13 @@ function optionAvailability(a) {
   return {
     q1: single("q1Idx", "q1", [1, 2, 3]),
     q2: single("q2Idx", "q2", [1, 2, 3, 4, 5]),
-    // Q3(향)은 화면구성 메모대로 이전 선택과 무관하게 5개를 전부 띄운다
+    q3: multi("smellIdx", "q3", [1, 2, 3, 4, 5]),
     q4: multi("seasonIdx", "q4", [1, 2, 3]),
     q5: single("q5Idx", "q5", [1, 2, 3, 4]),
   };
 }
 
 // ── 식품 후보 ────────────────────────────────────────────────
-// 지금까지의 답변으로 살아남은 메뉴들의 식재료를 그대로 보여준다.
-// (예전의 식품선별 표 기반 배치는 문항이 바뀌면서 폐기)
 function buildFoodCandidates(a) {
   const names = new Set();
   if (a.q2Idx === 5) {
@@ -735,7 +754,6 @@ function buildFoodCandidates(a) {
       m.ing.forEach((i) => names.add(i[0]));
     });
   }
-  // Q3-5를 고른 사용자에게는 메뉴명에 드러나지 않는 오이·수박을 감춘다
   a.smellIdx.forEach((i) => (Q3_HIDE_FOODS[i] || []).forEach((f) => names.delete(f)));
 
   const grouped = {};
@@ -749,7 +767,6 @@ function buildFoodCandidates(a) {
   return grouped;
 }
 
-// "이렇게도 먹어볼 수 있어요" 존에 띄울 추가 식품
 function buildExtraFoods(a, mainNames) {
   if (!a.q1Idx) return [];
   const base = [...(EXTRA_FOODS_BY_Q1[a.q1Idx] || [])];
@@ -758,28 +775,31 @@ function buildExtraFoods(a, mainNames) {
   return uniq(base).filter((n) => FOOD_GROUP[n] && !mainNames.has(n) && !hidden.has(n));
 }
 
-// 추가로 고른 식품이 실제로 들어간 메뉴를 찾아준다.
-// 1순위는 오늘 고른 식감(Q1)에 맞는 단독 메뉴, 그래도 없으면 식감 조건을 풀고
-// 상차림 구성요소(국·찌개·주찬·부찬)까지 넓혀서 찾는다.
+// [채민 파트 ♡②] 추가로 고른 식품이 실제로 들어간 메뉴.
+// 메모대로 typeB(상차림 구성요소: 국·탕 / 찌개·전골 / 주찬 / 부찬)를 먼저 보여주고,
+// 그 재료를 쓰는 구성요소가 없는 식품(예: 백미·고구마)만 typeA 단독 메뉴로 채운다.
 function buildExtraSuggestions(a, extraPicked) {
   if (extraPicked.length === 0) return [];
   const hitOf = (m) => uniq(m.ing.filter((i) => extraPicked.includes(i[0])).map((i) => i[0]));
   const isMainRole = (m, f) => m.ing.some((i) => i[0] === f && (i[1] === "1" || i[1] === "2"));
   const menuSmellOk = (m) => a.smellIdx.every((i) => bit(m.q3, i)) && usableSauces(m.sauceIds, a.smellIdx).length > 0;
 
-  let pool = MENUS.filter((m) => (!a.q1Idx || bit(m.q1, a.q1Idx)) && menuSmellOk(m) && hitOf(m).length > 0);
-  if (pool.length === 0) {
-    pool = [
-      ...MENUS.filter((m) => menuSmellOk(m) && hitOf(m).length > 0),
-      ...SUBS.filter((m) => subPassesSmell(m, a.smellIdx) && hitOf(m).length > 0),
-    ];
-  }
-  const scored = pool.map((m) => {
+  const subHits = SUBS.filter((m) => subPassesSmell(m, a.smellIdx) && hitOf(m).length > 0);
+  const covered = new Set(subHits.flatMap(hitOf));
+  // typeB로 이미 보여줄 수 있는 재료는 typeA에서 중복해 보여주지 않는다
+  const menuHits = MENUS.filter((m) => menuSmellOk(m) && hitOf(m).some((f) => !covered.has(f)));
+
+  const scored = [...subHits, ...menuHits].map((m) => {
     const hit = hitOf(m);
-    return { ...m, hit, mainHits: hit.filter((f) => isMainRole(m, f)).length };
+    return { ...m, hit, isSub: !m.q2, mainHits: hit.filter((f) => isMainRole(m, f)).length };
   });
-  // 그 재료가 주재료로 쓰인 메뉴를 먼저, 그다음 겹치는 재료가 많은 순
-  scored.sort((x, y) => y.mainHits - x.mainHits || y.hit.length - x.hit.length || hashStr(x.id) - hashStr(y.id));
+  scored.sort(
+    (x, y) =>
+      Number(y.isSub) - Number(x.isSub) ||
+      y.mainHits - x.mainHits ||
+      y.hit.length - x.hit.length ||
+      hashStr(x.id) - hashStr(y.id)
+  );
   const seen = new Set();
   return scored.filter((m) => (seen.has(m.name) ? false : (seen.add(m.name), true)));
 }
@@ -827,7 +847,7 @@ function itemVitamins(item, selected) {
   return [...set];
 }
 
-const GROUP_ICON = { rice: "🍚", table_main: "🍲", side: "🥗", main: "🍽️" };
+const GROUP_ICON = { rice: "🍚", table_main: "🍲", side: "🥗", main: "🍽️", extra: "✨", more: "🔎" };
 
 // 결과 화면의 "다시 고르기" 버튼이 쓰는 단계 번호
 const STEP_LINKS = {
@@ -1177,19 +1197,26 @@ function SauceChips({ sauces }) {
   );
 }
 
-function MenuToggleCard({ item, selected, sauces, expanded, onToggle }) {
+// 메뉴 토글 카드.
+//  mode="selected" : 고른 식품 중 이 메뉴에 쓰이는 재료만 보여준다(추천 메뉴/상차림)
+//  mode="all"      : 메뉴에 들어가는 재료를 전부 보여주고, 고른 식품은 강조한다
+//                    ("이렇게도 먹어볼 수 있어요", "또 뭐가 있지?")
+function MenuToggleCard({ item, selected, sauces, expanded, onToggle, mode = "selected", roleTag }) {
+  const showAll = mode === "all";
   const byRole = ROLE_ORDER.map((role) => ({
     role,
-    foods: uniq(item.ing.filter((i) => i[1] === role && selected.includes(i[0])).map((i) => i[0])),
+    foods: uniq(item.ing.filter((i) => i[1] === role && (showAll || selected.includes(i[0]))).map((i) => i[0])),
   })).filter((g) => g.foods.length > 0);
-  const vitamins = itemVitamins(item, selected);
+  const vitaminBase = showAll ? item.ing.map((i) => i[0]) : selected;
+  const vitamins = itemVitamins(item, vitaminBase);
+  const badge = item.label || roleTag;
   return (
     <div className="rounded-2xl overflow-hidden" style={{ background: "#fff", border: `1px solid ${C.sagePale}` }}>
       <button type="button" onClick={onToggle} className="w-full flex items-center gap-3 px-4 py-3 text-left">
         <div className="flex items-center justify-center rounded-xl flex-shrink-0" style={{ width: 44, height: 44, fontSize: 22, background: C.sagePale }}>{GROUP_ICON[item.kind] || "🍽️"}</div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm truncate">
-            {item.label ? <span className="font-mono text-[10px] mr-1.5 px-1.5 py-0.5 rounded-full" style={{ background: C.sagePale, color: C.sageDeep }}>{item.label}</span> : null}
+            {badge ? <span className="font-mono text-[10px] mr-1.5 px-1.5 py-0.5 rounded-full" style={{ background: C.sagePale, color: C.sageDeep }}>{badge}</span> : null}
             {item.name}
           </p>
           {item.formName && <p className="text-xs mt-1" style={{ color: C.ink60 }}>{item.formName}</p>}
@@ -1199,7 +1226,10 @@ function MenuToggleCard({ item, selected, sauces, expanded, onToggle }) {
       {expanded && (
         <div className="px-4 pb-4 flex flex-col gap-3" style={{ borderTop: `1px solid ${C.sagePale}` }}>
           <div className="pt-3">
-            <p className="text-xs font-semibold mb-2" style={{ color: C.ink60 }}>고르신 식품 중 이 메뉴에 쓰이는 재료</p>
+            <p className="text-xs font-semibold mb-2" style={{ color: C.ink60 }}>
+              {showAll ? "이 메뉴에 들어가는 재료" : "고르신 식품 중 이 메뉴에 쓰이는 재료"}
+              {showAll && <span className="font-normal"> — 고르신 식품은 진하게 표시했어요</span>}
+            </p>
             {byRole.length > 0 ? (
               <div className="flex flex-col gap-1.5">
                 {byRole.map((g) => (
@@ -1207,7 +1237,13 @@ function MenuToggleCard({ item, selected, sauces, expanded, onToggle }) {
                     <span className="font-mono text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 mt-0.5" style={{ background: g.role === "1" || g.role === "2" ? C.sage : C.sagePale, color: g.role === "1" || g.role === "2" ? "#fff" : C.sageDeep }}>
                       {ROLE_LABEL[g.role]}
                     </span>
-                    <span className="flex flex-wrap gap-x-3 gap-y-1">{g.foods.map((n) => <FoodLabel key={n} name={n} />)}</span>
+                    <span className="flex flex-wrap gap-x-3 gap-y-1">
+                      {g.foods.map((n) => (
+                        <span key={n} style={showAll && selected.includes(n) ? { color: C.apricotDeep, fontWeight: 700 } : undefined}>
+                          <FoodLabel name={n} />
+                        </span>
+                      ))}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -1259,8 +1295,7 @@ export default function App() {
     [q1Idx, q2Idx, smellIdx, seasonIdx, q5Idx]
   );
 
-  // Q1=1 & Q2=5(일반식) → 5단계(조리 시간) 문항 자체를 띄우지 않는다.
-  // typeB(상차림) DB에 Q5 열이 없어 판정 근거가 없기 때문.
+  // Q2=5(일반식) → 5단계(조리 시간) 문항 자체를 띄우지 않는다.
   const skipCookStep = q2Idx === 5;
 
   const weightResult = useMemo(() => {
@@ -1321,10 +1356,26 @@ export default function App() {
   const sauceFor = (item) => displaySauces(item.sauceIds, smellIdx, seasonIdx);
   const cautions = useMemo(() => cautionsFor([...foodSelection, ...extraSelection]), [foodSelection, extraSelection]);
 
+  // 결과 화면 상단에 띄울 "내가 고른 조건" 한 문장
+  const selectionSummary = useMemo(() => {
+    const parts = [];
+    if (q1Idx) parts.push(`${Q1_SHORT[q1Idx - 1]}으로`);
+    if (q2Idx) parts.push(`${Q2_SHORT[q2Idx - 1]}를 원하시고`);
+    if (smellIdx.length > 0) parts.push(`${smellIdx.map((i) => Q3_SHORT[i - 1]).join("·")}는 피하고 싶고`);
+    else parts.push("향은 다 괜찮고");
+    if (seasonIdx.length > 0) parts.push(`${seasonIdx.map((i) => Q4_SHORT[i - 1]).join(" 또는 ")}을 고르셨어요`);
+    const head = parts.join(", ");
+    const cook = !skipCookStep && q5Idx ? ` 조리는 '${Q5_SHORT[q5Idx - 1]}' 기준이에요.` : "";
+    const foods = foodSelection.length > 0
+      ? ` 오늘 고르신 식품은 ${foodSelection.slice(0, 5).join(", ")}${foodSelection.length > 5 ? ` 외 ${foodSelection.length - 5}가지` : ""}예요.`
+      : "";
+    return `오늘은 ${head}.${cook}${foods}`;
+  }, [q1Idx, q2Idx, smellIdx, seasonIdx, q5Idx, skipCookStep, foodSelection]);
+
   const emptyGuide = useMemo(() => {
     switch (plan.reason) {
       case "combo":
-        return { text: "고르신 식감과 식사 형태 조합에 해당하는 메뉴가 DB에 없어요. 다른 형태를 골라보세요.", jumps: [STEP_LINKS.form] };
+        return { text: "고르신 식감과 식사 형태 조합에 해당하는 메뉴가 없어요. 다른 형태를 골라보세요.", jumps: [STEP_LINKS.form] };
       case "filtered":
         return {
           text: `고르신 식품으로 만들 수 있는 메뉴가 ${plan.blockedCount}가지 있는데, 오늘 고르신 향·간·조리시간 조건에 걸려 모두 빠졌어요. 아래 조건을 완화하면 다시 나타나요.`,
@@ -1345,7 +1396,6 @@ export default function App() {
   }, [plan]);
 
   // "또 뭐가 있지?" — 고른 식품으로 만들 수 있는 다른 메뉴.
-  // 주재료 규칙과 향 회피는 지키고, 형태·식감·간·조리시간만 풀어서 폭을 넓힌다.
   const morePool = useMemo(() => {
     if (foodSelection.length === 0) return [];
     const already = new Set(plan.items.map((i) => i.id));
@@ -1383,7 +1433,7 @@ export default function App() {
   };
 
   const allFoodsPicked = shownFoods.length > 0 && shownFoods.every((n) => foodSelection.includes(n));
-  const toggleAllFoods = () => setFoodSelection(allFoodsPicked ? [] : shownFoods);
+  const toggleAllFoods = () => setFoodSelection(allFoodsPicked ? [] : [...shownFoods]);
   const groupFoodNames = (group) => (foodCandidates[group] || []).map((f) => f.name);
   const isGroupPicked = (group) => {
     const names = groupFoodNames(group);
@@ -1393,7 +1443,9 @@ export default function App() {
     const names = groupFoodNames(group);
     setFoodSelection((prev) => (names.every((n) => prev.includes(n)) ? prev.filter((n) => !names.includes(n)) : [...prev, ...names.filter((n) => !prev.includes(n))]));
   };
-  const toggleExpandedMenu = (id) => setExpandedMenus((p) => ({ ...p, [id]: !p[id] }));
+  const allExtraPicked = extraFoods.length > 0 && extraFoods.every((n) => extraSelection.includes(n));
+  const toggleAllExtra = () => setExtraSelection(allExtraPicked ? [] : [...extraFoods]);
+  const toggleExpandedMenu = (key) => setExpandedMenus((p) => ({ ...p, [key]: !p[key] }));
 
   const allAnswered =
     q1Idx > 0 && q2Idx > 0 &&
@@ -1414,9 +1466,8 @@ export default function App() {
   };
 
   const handleNext = () => {
-    if (!canProceedStep()) { alert("필수 정보를 모두 입력해주세요."); return; }
+    if (!canProceedStep()) return;
     if (currentStep >= 6) { setReturnToResult(false); setCurrentStep(101); return; }
-    // 4단계 다음은 5단계이지만, 일반식이면 5단계를 건너뛴다
     if (currentStep === 4 && skipCookStep) { setCurrentStep(6); return; }
     setCurrentStep(currentStep + 1);
   };
@@ -1460,6 +1511,8 @@ export default function App() {
     </div>
   );
 
+  // 복수선택 문항의 전체 선택. 고르면 결과가 사라지는 항목은 애초에 화면에 없으므로,
+  // 남아 있는(=고를 수 있는) 항목만 순서대로 담는다.
   const selectAllChips = (key, values, current, setter, allowed) => {
     const visibleValues = values.filter((v) => !allowed || allowed.has(v) || current.includes(v));
     if (visibleValues.length === 0) return null;
@@ -1472,7 +1525,7 @@ export default function App() {
           const next = [...current];
           visibleValues.forEach((v) => {
             if (next.includes(v)) return;
-            if (!allowed || multiOptionEnabled({ ...answers, [key]: next }, key, v)) next.push(v);
+            if (multiOptionEnabled({ ...answers, [key]: next }, key, v)) next.push(v);
           });
           setter(next);
         }}
@@ -1484,7 +1537,7 @@ export default function App() {
     );
   };
 
-  const chipGroup = (key, values, current, setter, allowed, chips, labels, allOk) => {
+  const chipGroup = (key, values, current, setter, allowed, chips, allOk) => {
     const visibleValues = values.filter((v) => !allowed || allowed.has(v) || current.includes(v));
     const visibleChips = visibleValues.map((v) => chips[v - 1]);
     const specialChip = chips.length > values.length ? chips[values.length] : null;
@@ -1501,9 +1554,9 @@ export default function App() {
   };
 
   const renderChoiceList = (options, value, onPick, allowed) => {
-    const visibleOptions = !allowed ? options.map((label, i) => ({ label, idx: i + 1 })) : options
+    const visibleOptions = options
       .map((label, i) => ({ label, idx: i + 1 }))
-      .filter(({ idx }) => allowed.has(idx));
+      .filter(({ idx }) => !allowed || allowed.has(idx) || value === idx);
 
     return (
       <div className="flex flex-col gap-3">
@@ -1535,24 +1588,26 @@ export default function App() {
     </div>
   );
 
-  const navButtons = (nextLabel = "다음") => (
-    <div className="flex flex-col gap-3 pt-4">
-      {returnToResult && currentStep < 6 && (
-        <button type="button" onClick={() => { setReturnToResult(false); setCurrentStep(101); }} disabled={!allAnswered} className="py-2.5 rounded-full text-sm font-medium disabled:opacity-40" style={{ background: C.sagePale, color: C.sageDeep }}>
-          {allAnswered ? "결과로 바로 가기" : "뒤쪽 문항 답이 지워졌어요 — 다음을 눌러 이어가주세요"}
-          {allAnswered && <ChevronRight size={14} className="inline ml-1" />}
-        </button>
-      )}
-      <div className="flex gap-3">
-        <button type="button" onClick={handlePrev} className="px-6 py-2.5 rounded-full font-medium" style={{ background: C.sagePale, color: C.sageDeep }}>
-          <ChevronLeft size={16} className="inline mr-1" />이전
-        </button>
-        <button type="button" onClick={handleNext} className="flex-1 py-2.5 rounded-full font-medium text-white" style={{ background: C.apricot }}>
-          {nextLabel}<ChevronRight size={16} className="inline ml-1" />
-        </button>
+  const navButtons = (nextLabel = "다음") => {
+    const ok = canProceedStep();
+    return (
+      <div className="flex flex-col gap-3 pt-4">
+        {returnToResult && currentStep < 6 && allAnswered && (
+          <button type="button" onClick={() => { setReturnToResult(false); setCurrentStep(101); }} className="py-2.5 rounded-full text-sm font-medium" style={{ background: C.sagePale, color: C.sageDeep }}>
+            결과로 바로 가기<ChevronRight size={14} className="inline ml-1" />
+          </button>
+        )}
+        <div className="flex gap-3">
+          <button type="button" onClick={handlePrev} className="px-6 py-2.5 rounded-full font-medium" style={{ background: C.sagePale, color: C.sageDeep }}>
+            <ChevronLeft size={16} className="inline mr-1" />이전
+          </button>
+          <button type="button" onClick={handleNext} disabled={!ok} className="flex-1 py-2.5 rounded-full font-medium text-white disabled:opacity-40" style={{ background: C.apricot }}>
+            {nextLabel}<ChevronRight size={16} className="inline ml-1" />
+          </button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const stepCard = (title, desc, body, nextLabel) => (
     <div className="rounded-3xl p-6 md:p-8 flex flex-col gap-6" style={{ background: C.card, border: `1px solid ${C.sagePale}` }}>
@@ -1809,11 +1864,10 @@ export default function App() {
           renderChoiceList(Q2_FORM, q2Idx, setQ2Idx, avail.q2)
         )}
 
-        {/* 3단계(향)는 화면구성 메모대로 이전 선택과 무관하게 5개 선지를 항상 전부 띄운다 */}
         {flowType === "food" && currentStep === 3 && stepCard(
           "3단계: 냄새 민감도",
           "오늘 특히 민감하게 느껴지는 향이 있나요? (복수 선택, 없으면 '다 괜찮아요')",
-          chipGroup("smellIdx", [1, 2, 3, 4, 5], smellIdx, (v) => { setSmellAllOk(false); setSmellIdx(v); }, null,
+          chipGroup("smellIdx", [1, 2, 3, 4, 5], smellIdx, (v) => { setSmellAllOk(false); setSmellIdx(v); }, avail.q3,
             Q3_SMELL.map((label, i) => {
               const on = smellIdx.includes(i + 1);
               return (
@@ -1822,7 +1876,7 @@ export default function App() {
             }).concat(
               <button key="smell-all-ok" type="button" onClick={() => { setSmellIdx([]); setSmellAllOk(true); }} className="chip px-3 py-2 rounded-full text-xs font-medium" style={chipStyle(smellAllOk, C.blue)}>다 괜찮아요</button>
             ),
-            Q3_SMELL, smellAllOk
+            smellAllOk
           )
         )}
 
@@ -1832,12 +1886,10 @@ export default function App() {
           chipGroup("seasonIdx", [1, 2, 3], seasonIdx, setSeasonIdx, avail.q4,
             Q4_SEASONING.map((t, i) => {
               const on = seasonIdx.includes(i + 1);
-              const off = !on && !avail.q4.has(i + 1);
               return (
-                <button key={t} type="button" disabled={off} onClick={() => toggleSeason(i + 1)} title={off ? "이 간·풍미로는 쓸 수 있는 양념이 없어요" : undefined} className="chip px-4 py-2 rounded-full text-sm font-medium disabled:opacity-40" style={chipStyle(on, C.apricot)}>{t}</button>
+                <button key={t} type="button" onClick={() => toggleSeason(i + 1)} className="chip px-4 py-2 rounded-full text-sm font-medium" style={chipStyle(on, C.apricot)}>{t}</button>
               );
-            }),
-            Q4_SEASONING
+            })
           ),
           skipCookStep ? "식품 고르기" : "다음"
         )}
@@ -1908,11 +1960,16 @@ export default function App() {
             {/* [채민 파트] 이렇게도 먹어볼 수 있어요 */}
             {extraFoods.length > 0 && (
               <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ background: "#fff", border: `1px dashed ${C.blue}` }}>
-                <div>
-                  <p className="font-display text-base font-semibold" style={{ color: C.blueDeep }}>이렇게도 먹어볼 수 있어요</p>
-                  <p className="text-xs mt-1 leading-relaxed" style={{ color: C.ink60 }}>
-                    위 목록에는 없지만 지금 챙기면 좋은 식품이에요. 고르시면 이 재료가 들어간 상차림을 결과 화면 아래에 따로 보여드릴게요.
-                  </p>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-display text-base font-semibold" style={{ color: C.blueDeep }}>이렇게도 먹어볼 수 있어요</p>
+                    <p className="text-xs mt-1 leading-relaxed" style={{ color: C.ink60 }}>
+                      위 목록에는 없지만 지금 챙기면 좋은 식품이에요. 고르시면 이 재료가 들어간 메뉴를 결과 화면 아래에 따로 보여드릴게요.
+                    </p>
+                  </div>
+                  <button type="button" onClick={toggleAllExtra} className="chip px-3 py-1.5 rounded-full text-xs font-medium flex-shrink-0" style={chipStyle(allExtraPicked, C.blue)}>
+                    {allExtraPicked ? "전체 해제" : "전체 선택"}
+                  </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {extraFoods.map((n) => {
@@ -1951,10 +2008,8 @@ export default function App() {
               <h2 className="font-display text-2xl md:text-3xl font-semibold" style={{ color: C.ink }}>
                 {plan.kind === "table" && plan.setting ? plan.setting.label : "당신을 위한 추천 식사"}
               </h2>
-              <p className="text-sm leading-relaxed mt-2">
-                고르신 식품 {foodSelection.length}가지를 바탕으로 오늘의 메뉴를 구성했어요. 항목을 눌러 자세히 볼 수 있어요.
-                {!skipCookStep && q5Idx > 0 && ` 조리 시간은 '${COOK_LABEL[q5Idx - 1]}' 기준이에요.`}
-              </p>
+              <p className="text-sm leading-relaxed mt-2">{selectionSummary}</p>
+              <p className="text-xs leading-relaxed mt-1">이 조건으로 오늘의 메뉴를 구성했어요. 항목을 눌러 재료와 양념을 확인해보세요.</p>
             </div>
 
             <div className="rounded-3xl p-6 md:p-8" style={{ background: C.card, border: `1px solid ${C.sagePale}` }}>
@@ -1965,7 +2020,7 @@ export default function App() {
               <h3 className="font-display text-lg font-semibold px-1">{plan.kind === "table" ? "오늘의 상차림" : "추천 메뉴"}</h3>
               {plan.items.length > 0 ? (
                 plan.items.map((m) => (
-                  <MenuToggleCard key={m.id} item={m} selected={foodSelection} sauces={sauceFor(m)} expanded={!!expandedMenus[m.id]} onToggle={() => toggleExpandedMenu(m.id)} />
+                  <MenuToggleCard key={m.id} item={m} selected={foodSelection} sauces={sauceFor(m)} expanded={!!expandedMenus[`plan:${m.id}`]} onToggle={() => toggleExpandedMenu(`plan:${m.id}`)} />
                 ))
               ) : (
                 <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ background: "#fff", border: `1px solid ${C.apricot}55` }}>
@@ -1986,24 +2041,25 @@ export default function App() {
               )}
             </div>
 
-            {/* [채민 파트] 추가로 고른 식품이 들어간 메뉴 */}
+            {/* [채민 파트] 추가로 고른 식품이 들어간 메뉴 — 추천 메뉴와 똑같이 토글로 */}
             {extraSuggestions.length > 0 && (
               <div className="rounded-3xl p-6 md:p-8" style={{ background: C.card, border: `1px dashed ${C.blue}` }}>
                 <h3 className="font-display text-lg font-semibold mb-1" style={{ color: C.blueDeep }}>이렇게도 먹어볼 수 있어요</h3>
                 <p className="text-xs mb-4" style={{ color: C.ink60 }}>
-                  추가로 고르신 {extraSelection.join(", ")}이(가) 들어간 메뉴예요.
+                  추가로 고르신 {extraSelection.join(", ")}이(가) 들어간 메뉴예요. 눌러서 재료와 양념을 확인해보세요.
                 </p>
                 <div className="flex flex-col gap-2">
                   {extraSuggestions.slice(0, 6).map((m) => (
-                    <div key={m.id} className="rounded-xl px-4 py-3" style={{ background: "#fff", border: `1px solid ${C.sagePale}` }}>
-                      <p className="font-semibold text-sm">
-                        {subRoleLabel(m) && <span className="font-mono text-[10px] mr-1.5 px-1.5 py-0.5 rounded-full" style={{ background: C.sagePale, color: C.sageDeep }}>{subRoleLabel(m)}</span>}
-                        {m.name}
-                      </p>
-                      <p className="text-xs mt-1 leading-relaxed" style={{ color: C.ink60 }}>
-                        {m.formName ? `${m.formName} · ` : ""}{m.hit.join(", ")} 사용
-                      </p>
-                    </div>
+                    <MenuToggleCard
+                      key={m.id}
+                      item={{ ...m, kind: "extra" }}
+                      selected={[...foodSelection, ...extraSelection]}
+                      sauces={sauceFor(m)}
+                      mode="all"
+                      roleTag={subRoleLabel(m)}
+                      expanded={!!expandedMenus[`extra:${m.id}`]}
+                      onToggle={() => toggleExpandedMenu(`extra:${m.id}`)}
+                    />
                   ))}
                 </div>
               </div>
@@ -2014,19 +2070,20 @@ export default function App() {
                 <h3 className="font-display text-lg font-semibold">또 뭐가 있지?</h3>
                 <Shuffle size={16} style={{ color: C.ink60 }} />
               </div>
-              <p className="text-xs mb-4" style={{ color: C.ink60 }}>고르신 식품으로 만들 수 있는 다른 메뉴들이에요.</p>
+              <p className="text-xs mb-4" style={{ color: C.ink60 }}>고르신 식품으로 만들 수 있는 다른 메뉴들이에요. 눌러서 재료와 양념을 확인해보세요.</p>
               {moreMenus.length > 0 ? (
                 <div className="flex flex-col gap-2">
                   {moreMenus.map((m) => (
-                    <div key={m.id} className="rounded-xl px-4 py-3" style={{ background: "#fff", border: `1px solid ${C.sagePale}` }}>
-                      <p className="font-semibold text-sm">
-                        {subRoleLabel(m) && <span className="font-mono text-[10px] mr-1.5 px-1.5 py-0.5 rounded-full" style={{ background: C.sagePale, color: C.sageDeep }}>{subRoleLabel(m)}</span>}
-                        {m.name}
-                      </p>
-                      <p className="text-xs mt-1 leading-relaxed" style={{ color: C.ink60 }}>
-                        {uniq(m.ing.filter((i) => foodSelection.includes(i[0])).map((i) => i[0])).join(", ")}
-                      </p>
-                    </div>
+                    <MenuToggleCard
+                      key={m.id}
+                      item={{ ...m, kind: "more" }}
+                      selected={[...foodSelection, ...extraSelection]}
+                      sauces={sauceFor(m)}
+                      mode="all"
+                      roleTag={subRoleLabel(m)}
+                      expanded={!!expandedMenus[`more:${m.id}`]}
+                      onToggle={() => toggleExpandedMenu(`more:${m.id}`)}
+                    />
                   ))}
                 </div>
               ) : (
