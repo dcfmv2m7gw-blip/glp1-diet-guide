@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { ChevronRight, ChevronLeft, Info, RotateCcw, ChevronDown, ChevronUp, Shuffle, Sparkles, AlertCircle } from "lucide-react";
+import { ChevronRight, ChevronLeft, Info, RotateCcw, ChevronDown, ChevronUp, Shuffle, AlertCircle } from "lucide-react";
 import { MENUS as RAW_MENUS, SUBS as RAW_SUBS, RICE as RAW_RICE, SAUCES as RAW_SAUCES, FOODS as RAW_FOODS } from "./menuData";
 
 const C = {
@@ -50,7 +50,7 @@ const GUIDE_DATA = {
         goal: "충분한 영양소 섭취와 근육·골량 유지, 지속 가능한 식사 습관 형성",
         points: [
           "약물 용량 유지기에 들어서면 위장관 장애는 평균적으로 점차 감소하지만, 식욕 저하와 적은 식사량은 지속될 수 있어요.",
-          "식사량이 줄어든 상태가 지속되면 철, 칼슘, 마그네슘, 아연, 비타민 A·D·E·K·B1·B12·C 결핍 위험이 커질 수 있어요.",
+          "식사량이 줄어든 상태가 지속되면 엽산, 칼슘, 갈륨, 비타민 A·C·D·E 결핍 위험이 커질 수 있어요",
           "근육량 유지를 위해 끼니마다 단백질 식품을 지속적으로 챙겨 드세요. 다만, 단백질 섭취만으로 근육량을 유지하기는 어려우므로 근력 운동도 병행하세요.",
         ],
       },
@@ -422,22 +422,34 @@ const TABLE_SETTINGS = [
 // 영양 표시 / 주의 문구
 // ══════════════════════════════════════════════════════════════════
 const VITAMIN_META = {
-  D: { label: "비타민 D", color: "#C4863F", shape: "●" },
-  B1: { label: "비타민 B1", color: "#5E7FA6", shape: "◆" },
-  B12: { label: "비타민 B12", color: "#8B6BA8", shape: "▲" },
-  folate: { label: "엽산", color: "#4C8A5E", shape: "■" },
-  iron: { label: "철", color: "#B24A3A", shape: "★" },
-  zinc: { label: "아연", color: "#2E8C86", shape: "⬢" },
+  vitD:      { label: "비타민 D", color: "#3B6FB5", shape: "●" },
+  folate:    { label: "엽산",     color: "#4C8A5E", shape: "■" },
+  vitA:      { label: "비타민 A", color: "#E08A2E", shape: "▲" },
+  vitC:      { label: "비타민 C", color: "#C63A2E", shape: "◆" },
+  vitE:      { label: "비타민 E", color: "#8A5A2B", shape: "★" },
+  calcium:   { label: "칼슘",     color: "#FFFFFF", shape: "⬢", stroke: "#5C6459", fontSize: "1.35em" },
+  potassium: { label: "칼륨",     color: "#E3B505", shape: "▼" },
 };
 
 const FOOD_NUTRIENTS = {
-  연어: ["D", "B12"], 고등어: ["D", "B12"], 등푸른생선: ["D", "B12"], 꽁치: ["D", "B12"], 달걀: ["D"], 건표고버섯: ["D"],
-  현미: ["B1"], 귀리: ["B1"], 검정콩: ["B1"], 해바라기씨: ["B1"],
-  바지락: ["B12", "iron"], 굴: ["B12", "zinc"], 조기: ["B12"],
-  렌틸콩: ["folate", "iron"], 시금치: ["folate", "iron"], 브로콜리: ["folate"], 콩나물: ["folate"], 콜리플라워: ["folate"],
-  두부: ["iron"], 멸치: ["iron"], 병아리콩: ["zinc"], 게: ["zinc"], 새우: ["zinc"], 호박씨: ["zinc"],
+  // 비타민 D
+  연어: ["vitD"], 고등어: ["vitD", "vitE"], 달걀: ["vitD", "vitA"], 건표고버섯: ["vitD"], 조기: ["vitD"], 꽁치: ["vitD"],
+  // 엽산
+  시금치: ["folate", "vitA", "vitC", "vitE", "potassium"],
+  렌틸콩: ["folate", "potassium"], 브로콜리: ["folate", "vitC"], 콩나물: ["folate"], "저지방 우유": ["folate", "calcium"],
+  // 비타민 A
+  당근: ["vitA"], 단호박: ["vitA"], 들깻잎: ["vitA"], "로메인 상추": ["vitA"],
+  // 비타민 E
+  "올리브오일(엑스트라버진)": ["vitE"], 콩기름: ["vitE"], 해바라기씨: ["vitE"], 아몬드: ["vitE"], 아보카도: ["vitE"], 카놀라유: ["vitE"],
+  // 비타민 C
+  귤: ["vitC"], 딸기: ["vitC"], 오렌지: ["vitC"], 배추: ["vitC"], 청경채: ["vitC", "calcium"], 키위: ["vitC"], "빨간 파프리카": ["vitC"],
+  // 칼슘
+  두부: ["calcium"], 멸치: ["calcium"], "저지방 치즈": ["calcium"], "무가당 플레인 요거트": ["calcium"],
+  // 칼륨
+  "돼지고기 안심": ["potassium"], 렌틸콩: ["potassium"], 고구마: ["potassium"], 바나나: ["potassium"],
 };
 
+// Q1=3에서 "이렇게도 먹어볼 수 있어요" 후보로 쓰는 식품 목록 (별표 표시 용도는 아님)
 const ESSENTIAL_FOODS = ["현미", "귀리", "두부", "달걀", "건표고버섯", "시금치", "딸기", "블루베리", "저지방 우유", "무가당 플레인 요거트", "해바라기씨", "호박씨"];
 
 const FOOD_CAUTIONS = [
@@ -761,7 +773,7 @@ function buildFoodCandidates(a) {
   [...names].forEach((n) => {
     const g = FOOD_GROUP[n];
     if (!g) return;
-    grouped[g].push({ name: n, essential: ESSENTIAL_FOODS.includes(n) });
+    grouped[g].push({ name: n });
   });
   FOOD_GROUP_ORDER.forEach((g) => grouped[g].sort((x, y) => x.name.localeCompare(y.name, "ko")));
   return grouped;
@@ -879,13 +891,23 @@ const rangeLabel = (v) => (Array.isArray(v) ? `${v[0]}~${v[1]}%` : `${v}%`);
 // 표시용 컴포넌트
 // ══════════════════════════════════════════════════════════════════
 
+function vitaminStyle(key) {
+  const m = VITAMIN_META[key];
+  return {
+    color: m.color,
+    fontWeight: 700,
+    ...(m.fontSize ? { fontSize: m.fontSize, lineHeight: 1, verticalAlign: "-0.12em" } : {}),
+    ...(m.stroke ? { WebkitTextStroke: `0.7px ${m.stroke}`, paintOrder: "stroke" } : {}),
+  };
+}
+
 function FoodLabel({ name, size = "text-sm" }) {
   const tags = FOOD_NUTRIENTS[name] || [];
   return (
     <span className={`${size} font-medium`}>
       {name}
       {tags.map((t) => (
-        <span key={t} className="ml-1" style={{ color: VITAMIN_META[t].color, fontWeight: 700 }} title={VITAMIN_META[t].label}>
+        <span key={t} className="ml-1" style={vitaminStyle(t)} title={VITAMIN_META[t].label}>
           {VITAMIN_META[t].shape}
         </span>
       ))}
@@ -1016,7 +1038,7 @@ function VitaminLegend() {
     <p className="text-xs leading-relaxed" style={{ color: "#9A988E" }}>
       {keys.map((k, i) => (
         <span key={k}>
-          <span style={{ color: VITAMIN_META[k].color, fontWeight: 700 }}>{VITAMIN_META[k].shape}</span> {VITAMIN_META[k].label}
+          <span style={vitaminStyle(k)}>{VITAMIN_META[k].shape}</span> {VITAMIN_META[k].label}
           {i < keys.length - 1 ? "  ·  " : ""}
         </span>
       ))}
@@ -1910,11 +1932,6 @@ export default function App() {
               </p>
             </div>
 
-            <div className="rounded-2xl p-3 flex items-start gap-2 text-xs leading-relaxed" style={{ background: C.sagePale, color: C.sageDeep }}>
-              <Sparkles size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-              <span><strong>별표(*)</strong>는 이 시기에 부족해지기 쉬운 영양소를 채워주는 식품이에요.</span>
-            </div>
-
             <div className="rounded-2xl p-3 flex items-start gap-2 text-xs leading-relaxed" style={{ background: "#FFF3EC", color: C.apricotDeep }}>
               <Info size={14} style={{ flexShrink: 0, marginTop: 1 }} />
               <span>
@@ -1946,8 +1963,7 @@ export default function App() {
                     {foodCandidates[group].map((f) => {
                       const active = foodSelection.includes(f.name);
                       return (
-                        <button key={f.name} type="button" onClick={() => toggleFood(f.name)} className="chip px-3 py-2 rounded-full text-sm font-medium flex items-center gap-1" style={chipStyle(active, C.apricot)}>
-                          {f.essential && <span style={{ color: active ? "#fff" : C.apricotDeep, fontWeight: 700 }}>*</span>}
+                        <button key={f.name} type="button" onClick={() => toggleFood(f.name)} className="chip px-3 py-2 rounded-full text-sm font-medium" style={chipStyle(active, C.apricot)}>
                           <FoodLabel name={f.name} size="text-sm" />
                         </button>
                       );
