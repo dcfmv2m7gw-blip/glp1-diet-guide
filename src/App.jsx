@@ -1918,11 +1918,11 @@ export default function App() {
                     style={{ background: c.bg }}
                   >
                     <span className="min-w-0">
-                      <span className="flex items-center gap-2">
+                      <span className="flex items-center gap-2 md:relative md:-top-px">
                         <span aria-hidden="true" style={{ fontSize: 17, lineHeight: 1 }}>{c.icon}</span>
                         <strong className="text-sm font-semibold" style={{ color: c.fg }}>{c.title}</strong>
                       </span>
-                      <small className="block mt-1 leading-relaxed" style={{ color: c.sub }}>{c.desc}</small>
+                      <small className="block mt-1 leading-relaxed md:pl-[25px]" style={{ color: c.sub }}>{c.desc}</small>
                     </span>
                   </button>
                 ))}
