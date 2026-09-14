@@ -444,7 +444,7 @@ const VITAMIN_META = {
   vitC:      { label: "비타민 C", color: "#C83F31", shape: "diamond" },
   vitE:      { label: "비타민 E", color: "#8E5F31", shape: "star" },
   calcium:   { label: "칼슘",     color: "#FFFFFF", shape: "hexagon", stroke: "#6E74A0" },
-  potassium: { label: "칼륨",     color: "#D8AC08", shape: "triangleDown" },
+  potassium: { label: "칼륨",     color: "#D8AC08", shape: "heart" },
 };
 
 // 받침 유무로 을/를을 고른다. "비타민 D"처럼 영문자로 끝나는 이름은 읽는 소리로 판정한다.
@@ -570,6 +570,26 @@ function hashStr(str) {
   let h = 0;
   for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0;
   return h;
+}
+
+// "또 뭐가 있지?" 정렬용. 지금 답변과 몇 개나 맞는지 비율로 낸다.
+// typeA는 Q1·Q2·Q4·Q5를, typeB 구성요소는 양념을 통한 Q4만 판정한다.
+// 향(Q3)은 morePool에서 이미 걸러진다.
+function conditionFit(m, a) {
+  let hit = 0;
+  let total = 0;
+  const check = (ok) => { total += 1; if (ok) hit += 1; };
+
+  if (m.q1) {
+    if (a.q1Idx) check(bit(m.q1, a.q1Idx));
+    if (a.q2Idx) check(bit(m.q2, a.q2Idx));
+    if (a.q5Idx) check(bit(m.q5, a.q5Idx));
+    if (a.seasonIdx.length > 0) check(a.seasonIdx.some((i) => bit(m.q4, i)));
+  } else if (a.seasonIdx.length > 0) {
+    check(seasoningFeasible([usableSauces(m.sauceIds, a.smellIdx)], a.seasonIdx));
+  }
+
+  return total === 0 ? { rate: 0, total: 0 } : { rate: hit / total, total };
 }
 
 function rankItems(pool, selected, answers, passFn) {
@@ -840,6 +860,26 @@ function buildExtraSuggestions(a, extraPicked) {
 
 const MORE_PAGE_SIZE = 5;
 
+function shuffle(arr) {
+  const out = [...arr];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+// 오늘 조건에 잘 맞는 묶음부터 내보내되, 같은 묶음 안에서는 매번 다르게 섞는다.
+function shuffleByFit(pool) {
+  const tiers = new Map();
+  pool.forEach((m) => {
+    const key = m.fitRate ?? 0;
+    if (!tiers.has(key)) tiers.set(key, []);
+    tiers.get(key).push(m);
+  });
+  return [...tiers.keys()].sort((a, b) => b - a).flatMap((k) => shuffle(tiers.get(k)));
+}
+
 function drawMenus(pool, seen, count, justShown) {
   let rest = pool.filter((m) => !seen.has(m.name));
   let cycle = new Set(seen);
@@ -848,11 +888,7 @@ function drawMenus(pool, seen, count, justShown) {
     const fresh = pool.filter((m) => !(justShown && justShown.has(m.name)));
     rest = fresh.length >= count ? fresh : pool;
   }
-  const arr = [...rest];
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
+  const arr = shuffleByFit(rest);
   const picked = [];
   const batchNames = new Set();
   for (const m of arr) {
@@ -922,8 +958,6 @@ function markPoints(shape) {
   switch (shape) {
     case "triangle":
       return ngon(3, -Math.PI / 2);
-    case "triangleDown":
-      return ngon(3, Math.PI / 2);
     case "diamond":
       return ngon(4, -Math.PI / 2);
     case "hexagon":
@@ -963,6 +997,8 @@ function VitaminMark({ nutrient, size = 11 }) {
     shape = <circle cx={size / 2} cy={size / 2} r={h / 2} {...paint} />;
   } else if (m.shape === "square") {
     shape = <rect x={(size - h) / 2} y={(size - h) / 2} width={h} height={h} rx={h * 0.16} {...paint} />;
+  } else if (m.shape === "heart") {
+    shape = <path d={`M ${size / 2} ${size * 0.87} C ${size * 0.42} ${size * 0.78}, ${size * 0.16} ${size * 0.62}, ${size * 0.16} ${size * 0.36} C ${size * 0.16} ${size * 0.08}, ${size * 0.5} ${size * 0.08}, ${size / 2} ${size * 0.33} C ${size * 0.5} ${size * 0.08}, ${size * 0.84} ${size * 0.08}, ${size * 0.84} ${size * 0.36} C ${size * 0.84} ${size * 0.62}, ${size * 0.58} ${size * 0.78}, ${size / 2} ${size * 0.87} Z`} {...paint} />;
   } else {
     shape = <polygon points={fitPoints(pts, size)} {...paint} />;
   }
@@ -1346,6 +1382,9 @@ function MenuToggleCard({ item, selected, sauces, expanded, onToggle, mode = "se
           <p className="font-semibold text-sm truncate">
             {badge ? <span className="font-mono text-[10px] mr-1.5 px-2 py-0.5 rounded-full" style={{ background: C.sagePale, color: C.sageDeep }}>{badge}</span> : null}
             {item.name}
+            {item.fitTotal > 0 && item.fitRate === 1 && (
+              <span className="font-mono text-[10px] ml-1.5 px-2 py-0.5 rounded-full" style={{ background: C.sageTint, color: C.sageDeep }}>오늘 조건 맞음</span>
+            )}
           </p>
           {item.formName && <p className="text-xs mt-1" style={{ color: C.ink40 }}>{item.formName}</p>}
         </div>
@@ -1532,17 +1571,26 @@ export default function App() {
   const morePool = useMemo(() => {
     if (foodSelection.length === 0) return [];
     const already = new Set(plan.items.map((i) => i.id));
-    return [...MENUS, ...SUBS].filter(
-      (m) =>
-        !already.has(m.id) &&
-        usableSauces(m.sauceIds, smellIdx).length > 0 &&
-        (m.q3 ? smellIdx.every((i) => bit(m.q3, i)) : subPassesSmell(m, smellIdx)) &&
-        meetsMainRoles(m, foodSelection) &&
-        m.ing.some((i) => foodSelection.includes(i[0]))
-    );
-  }, [foodSelection, smellIdx, plan]);
+    return [...MENUS, ...SUBS]
+      .filter(
+        (m) =>
+          !already.has(m.id) &&
+          usableSauces(m.sauceIds, smellIdx).length > 0 &&
+          (m.q3 ? smellIdx.every((i) => bit(m.q3, i)) : subPassesSmell(m, smellIdx)) &&
+          meetsMainRoles(m, foodSelection) &&
+          m.ing.some((i) => foodSelection.includes(i[0]))
+      )
+      .map((m) => {
+        const fit = conditionFit(m, answers);
+        return { ...m, fitRate: fit.rate, fitTotal: fit.total };
+      });
+  }, [foodSelection, smellIdx, answers, plan]);
 
   const moreTotal = useMemo(() => uniq(morePool.map((m) => m.name)).length, [morePool]);
+  const moreFitCount = useMemo(
+    () => uniq(morePool.filter((m) => m.fitTotal > 0 && m.fitRate === 1).map((m) => m.name)).length,
+    [morePool]
+  );
 
   useEffect(() => {
     const { picked, seen } = drawMenus(morePool, new Set(), MORE_PAGE_SIZE);
@@ -1860,17 +1908,17 @@ export default function App() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
-                  { key: "food", title: "식품 선택", desc: "오늘 입맛에 맞는 식품 추천", bg: C.apricotPale, fg: C.apricotDeep, sub: "#A2674A", onClick: () => { setFlowType("food"); setCurrentStep(1); } },
-                  { key: "weight", title: "체중 변화", desc: "임상시험 자료와 내 감량률 비교", bg: C.bluePale, fg: C.blueDeep, sub: "#5A7C83", onClick: openWeight },
+                  { key: "food", icon: "🥗", title: "식품 선택", desc: "오늘 입맛에 맞는 식품 추천", bg: C.apricotPale, fg: C.apricotDeep, sub: "#A2674A", onClick: () => { setFlowType("food"); setCurrentStep(1); } },
+                  { key: "weight", icon: "📈", title: "체중 변화", desc: "임상시험 자료와 내 감량률 비교", bg: C.bluePale, fg: C.blueDeep, sub: "#5A7C83", onClick: openWeight },
                 ].map((c) => (
                   <button
                     key={c.key}
                     onClick={c.onClick}
-                    className="lift rounded-[26px] p-5 md:p-6 flex flex-col justify-between text-left min-h-[132px]"
+                    className="lift rounded-[26px] p-5 md:p-6 flex items-center gap-3 text-left min-h-[132px]"
                     style={{ background: c.bg }}
                   >
-                    <ChevronRight size={20} style={{ color: c.fg }} />
-                    <span className="mt-6">
+                    <span aria-hidden="true" className="flex-shrink-0" style={{ fontSize: 22, lineHeight: 1 }}>{c.icon}</span>
+                    <span>
                       <span className="block font-display text-base font-semibold mb-1" style={{ color: c.fg }}>{c.title}</span>
                       <span className="block text-xs leading-relaxed" style={{ color: c.sub }}>{c.desc}</span>
                     </span>
@@ -2276,7 +2324,7 @@ export default function App() {
                 <h3 className="font-display text-base font-semibold">또 뭐가 있지?</h3>
                 <Shuffle size={16} style={{ color: C.ink40 }} />
               </div>
-              <p className="text-xs mb-4 leading-relaxed" style={{ color: C.ink60 }}>고르신 식품으로 만들 수 있는 다른 메뉴들이에요. 눌러서 재료와 양념을 확인해보세요.</p>
+              <p className="text-xs mb-4 leading-relaxed" style={{ color: C.ink60 }}>고르신 식품으로 만들 수 있는 다른 메뉴들이에요. 오늘 고르신 식감·형태·간 조건에 잘 맞는 메뉴부터 보여드려요.</p>
               {moreMenus.length > 0 ? (
                 <div className="flex flex-col gap-2">
                   {moreMenus.map((m) => (
@@ -2302,6 +2350,7 @@ export default function App() {
                   <button type="button" onClick={drawMoreMenus} className="chip w-full mt-4 py-3 rounded-full text-sm font-medium" style={{ background: C.sageTint, color: C.sageDeep }}>더 볼래!</button>
                   <p className="text-[11px] mt-2.5 text-center" style={{ color: C.ink40 }}>
                     만들 수 있는 다른 메뉴 {moreTotal}가지 중 {moreMenus.length}가지를 보고 있어요
+                    {moreFitCount > 0 ? ` · 오늘 조건에 딱 맞는 메뉴 ${moreFitCount}가지` : ""}
                   </p>
                 </>
               )}
