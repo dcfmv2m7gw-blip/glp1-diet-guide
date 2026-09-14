@@ -1914,13 +1914,15 @@ export default function App() {
                   <button
                     key={c.key}
                     onClick={c.onClick}
-                    className="lift rounded-[26px] p-5 md:p-6 flex items-center gap-3 text-left min-h-[132px]"
+                    className="lift rounded-[20px] p-5 flex items-center text-left"
                     style={{ background: c.bg }}
                   >
-                    <span aria-hidden="true" className="flex-shrink-0" style={{ fontSize: 22, lineHeight: 1 }}>{c.icon}</span>
-                    <span>
-                      <span className="block font-display text-base font-semibold mb-1" style={{ color: c.fg }}>{c.title}</span>
-                      <span className="block text-xs leading-relaxed" style={{ color: c.sub }}>{c.desc}</span>
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-2">
+                        <span aria-hidden="true" style={{ fontSize: 17, lineHeight: 1 }}>{c.icon}</span>
+                        <strong className="text-sm font-semibold" style={{ color: c.fg }}>{c.title}</strong>
+                      </span>
+                      <small className="block mt-1 leading-relaxed" style={{ color: c.sub }}>{c.desc}</small>
                     </span>
                   </button>
                 ))}
