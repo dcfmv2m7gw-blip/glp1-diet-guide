@@ -28,7 +28,7 @@ const C = {
 };
 
 // ══════════════════════════════════════════════════════════════════
-// 권고사항 (변경 없음)
+// 권고사항
 // ══════════════════════════════════════════════════════════════════
 const GUIDE_DATA = {
   general: {
@@ -61,7 +61,7 @@ const GUIDE_DATA = {
         goal: "충분한 영양소 섭취와 근육·골량 유지, 지속 가능한 식사 습관 형성",
         points: [
           "약물 용량 유지기에 들어서면 위장관 장애는 평균적으로 점차 감소하지만, 식욕 저하와 적은 식사량은 지속될 수 있어요.",
-          "식사량이 줄어든 상태가 지속되면 엽산, 칼슘, 갈륨, 비타민 A·C·D·E 결핍 위험이 커질 수 있어요",
+          "식사량이 줄어든 상태가 지속되면 엽산, 칼슘, 칼륨, 비타민 A·C·D·E 결핍 위험이 커질 수 있어요.",
           "근육량 유지를 위해 끼니마다 단백질 식품을 지속적으로 챙겨 드세요. 다만, 단백질 섭취만으로 근육량을 유지하기는 어려우므로 근력 운동도 병행하세요.",
         ],
       },
@@ -114,7 +114,7 @@ const GUIDE_DATA = {
       ],
       pancreatitis: [
         "체중이 급격하게 감소하면 담즙으로 배출되는 콜레스테롤이 증가해 담석이 발생해 췌장염으로 이어질 수 있으므로 과도한 장시간 금식이나 극단적인 저열량 식단은 피해야 해요.",
-        "오른쪽 윗배 통증이 장시간 지속되면 즉시 의료진을 찾아 진료를 받으세요.",
+        "상복부 통증이 장시간 지속되면 즉시 의료진을 찾아 진료를 받으세요.",
       ],
       gallstone: [
         "체중이 급격하게 감소하면 담즙으로 배출되는 콜레스테롤이 증가해 담석이 발생하므로 과도한 장시간 금식이나 극단적인 저열량 식단은 피해야 해요.",
@@ -122,7 +122,7 @@ const GUIDE_DATA = {
       ],
       abdominal: [
         "기름진 음식과 많은 양의 식사를 피해주세요.",
-        "늦은 시간의 과식과 음주는 속 불편함을 악화시킬 수 있으므로 피하는 것이 좋습니다. 증상이 있는 동안에는 저지방 식품을 소량씩 부드럽게 먹도록 하세요.",
+        "늦은 시간의 과식과 음주는 속 불편함을 악화시킬 수 있으므로 피하는 것이 좋아요. 증상이 있는 동안에는 저지방 식품을 소량씩 부드럽게 먹도록 하세요.",
       ],
       headache: [
         "증상이 계속되거나 심해지면 단순한 일시적 현상으로 넘기지 않고, 전반적인 영양 섭취 상태와 다른 건강상 원인을 함께 확인하세요.",
@@ -156,7 +156,7 @@ const GUIDE_DATA = {
         title: "입맛이 거의 없고 음식을 먹는 것이 부담스러울 때",
         points: [
           { head: "적은 양을 3~4시간 간격으로 나누어 드세요", body: "한 번에 평균 식사량을 섭취하려 하지 말고, 3~4시간 간격으로 소량 분할 섭취하며 냄새가 강하거나 기름진 조리법은 피하세요." },
-          { head: "미온수의 물을 조금씩 자주 마셔 체액을 보충하세요", body: "식사량이 급감할 때 수분 섭취가 줄면 탈수로 인한 급성 신손상 위험이 커지므로, 하루 종일 물을 나누어 마셔 탈수를 우선 예방해야 해요." },
+          { head: "미지근한 물을 조금씩 자주 마셔 체액을 보충하세요", body: "식사량이 급감할 때 수분 섭취가 줄면 탈수로 인한 급성 신손상 위험이 커지므로, 하루 종일 물을 나누어 마셔 탈수를 우선 예방해야 해요." },
           { head: "고형식 대신 부드러운 단백질 연식, 유동식을 활용하세요", body: "씹어 삼키기 힘든 고형식 대신 고단백 쉐이크, 스무디, 맑은 단백질 수프, 계란찜 등을 활용하여 근육 손실과 영양 결핍을 방지하세요." },
         ],
       },
@@ -359,17 +359,17 @@ const Q5_COOKTIME = ["바로 먹을래요", "데우기만 하고 먹을래요", 
 
 // 결과 화면 요약 문장에 쓰는 짧은 표현
 const Q1_SHORT = ["치아로 씹는 식감", "혀와 입천장으로 으깨는 식감", "씹기도 으깨기도 부담스러운 상태"];
-const Q2_SHORT = ["마시는 형태", "쉽게 떠먹는 형태", "핑거푸드", "혼합형 한그릇", "반찬을 포함한 일반식"];
+const Q2_SHORT = ["마시는 형태", "쉽게 떠먹는 형태", "핑거푸드", "한그릇 요리", "반찬을 포함한 일반식"];
 const Q3_SHORT = ["수산물 비린내", "고기 누린내", "발효·숙성 향", "마늘·양파 향", "오이·수박 향"];
 const Q4_SHORT = ["재료 본연의 맛", "담백하고 삼삼한 간", "양념이 있는 맛"];
 const Q5_SHORT = ["바로 먹기", "데우기만 하기", "15분 이내 조리", "충분히 조리하기"];
 
-// [정민 파트] 엑셀에 담기지 않아 코드로 처리하는 부분 ①
+// 엑셀에 담기지 않아 코드로 처리하는 부분
 // Q3-5(오이·수박 향)를 고른 사용자에게는, 메뉴명에 오이가 없더라도(예: 비빔밥)
 // 재료 목록에 오이가 들어간 메뉴가 있으므로 식품 목록에서 해당 식품을 숨긴다.
 const Q3_HIDE_FOODS = { 1: [], 2: [], 3: [], 4: [], 5: ["오이", "수박"] };
 
-// [채민 파트] "이렇게도 먹어볼 수 있어요" 존에 추가로 띄울 식품
+// "이렇게도 먹어볼 수 있어요" 존에 추가로 띄울 식품
 const EXTRA_FOODS_BY_Q1 = {
   1: [],
   2: ["백미", "고구마", "달걀", "두부", "굴", "게", "단호박", "무"],
@@ -448,7 +448,7 @@ const VITAMIN_META = {
 };
 
 // 받침 유무로 을/를을 고른다. "비타민 D"처럼 영문자로 끝나는 이름은 읽는 소리로 판정한다.
-const ALPHA_HAS_FINAL = { L: 1, M: 1, N: 1, R: 1, X: 1 };
+const ALPHA_HAS_FINAL = { L: 1, M: 1, N: 1, R: 1 };
 function hasFinalConsonant(word) {
   const ch = (word || "").trim().slice(-1);
   if (!ch) return false;
@@ -459,6 +459,15 @@ function hasFinalConsonant(word) {
   return false;
 }
 const objectParticle = (word) => (hasFinalConsonant(word) ? "을" : "를");
+const topicParticle = (word) => (hasFinalConsonant(word) ? "은" : "는");
+const subjectParticle = (word) => (hasFinalConsonant(word) ? "이" : "가");
+const copula = (word) => (hasFinalConsonant(word) ? "이에요" : "예요");
+function instrumentalParticle(word) {
+  const ch = (word || "").trim().slice(-1);
+  const code = ch.charCodeAt(0);
+  if (code >= 0xac00 && code <= 0xd7a3 && (code - 0xac00) % 28 === 8) return "로";
+  return hasFinalConsonant(word) ? "으로" : "로";
+}
 
 const FOOD_NUTRIENTS = {
   // 비타민 D
@@ -485,7 +494,7 @@ const ESSENTIAL_FOODS = ["현미", "귀리", "두부", "달걀", "건표고버�
 // 추천 엔진
 // ══════════════════════════════════════════════════════════════════
 
-// [정민 파트 ②] Q3-3(발효·숙성 향) → S010·S011 제외
+// Q3-3(발효·숙성 향) → S010·S011 제외
 //               Q3-4(마늘·양파 향) → S005·S011·S013 제외
 function sauceAllowedBySmell(s, smellIdx) {
   if (smellIdx.includes(3) && s.c3 === 1) return false;
@@ -790,10 +799,19 @@ function optionAvailability(a) {
 function buildFoodCandidates(a) {
   const names = new Set();
   if (a.q2Idx === 5) {
+    const canJoin = (m) => {
+      const sauces = usableSauces(m.sauceIds, a.smellIdx);
+      if (a.seasonIdx.length === 0) return sauces.length > 0;
+      return a.seasonIdx.some((opt) => {
+        if (opt === 1) return sauces.some((s) => s.id === "S001");
+        if (opt === 2) return sauces.some((s) => s.id === "S001" || bit(s.q4, 2));
+        return sauces.length > 0;
+      });
+    };
     TABLE_SETTINGS.forEach((t) => {
       SUBS.forEach((m) => {
         if (![...t.mainForms, ...t.sideForms].includes(m.formId)) return;
-        if (!subPassesSmell(m, a.smellIdx)) return;
+        if (!subPassesSmell(m, a.smellIdx) || !canJoin(m)) return;
         m.ing.forEach((i) => names.add(i[0]));
       });
     });
@@ -828,7 +846,7 @@ function buildExtraFoods(a, mainNames) {
   return uniq(base).filter((n) => FOOD_GROUP[n] && !mainNames.has(n) && !hidden.has(n));
 }
 
-// [채민 파트 ♡②] 추가로 고른 식품이 실제로 들어간 메뉴.
+// 추가로 고른 식품이 실제로 들어간 메뉴.
 // 메모대로 typeB(상차림 구성요소: 국·탕 / 찌개·전골 / 주찬 / 부찬)를 먼저 보여주고,
 // 그 재료를 쓰는 구성요소가 없는 식품(예: 백미·고구마)만 typeA 단독 메뉴로 채운다.
 function buildExtraSuggestions(a, extraPicked) {
@@ -1353,7 +1371,7 @@ function SauceChips({ sauces }) {
       {open && (
         <p className="text-xs leading-relaxed mt-2.5 rounded-xl px-3 py-2.5" style={{ background: C.apricotPale, color: C.apricotDeep }}>
           <strong>{open.name}</strong>{" — "}
-          {open.parts && open.parts !== "없음" ? `${open.parts} 으로 만들어요.` : "따로 양념하지 않고 재료 본연의 맛으로 드세요."}
+          {open.parts && open.parts !== "없음" ? `${open.parts}${instrumentalParticle(open.parts)} 만들어요.` : "따로 양념하지 않고 재료 본연의 맛으로 드세요."}
         </p>
       )}
     </div>
@@ -1475,7 +1493,7 @@ export default function App() {
     const init = Number(guideInitialWeight);
     const cur = Number(guideCurrentWeight);
     const wk = Number(guideWeeks);
-    if (!init || !cur || !guideDiabetes) return null;
+    if (!init || !cur || !wk || !guideDiabetes) return null;
     const key = guideDiabetes === "예" ? "diabetes" : "noDiabetes";
     const lossRate = ((init - cur) / init) * 100;
     const table = WEIGHT_TABLES[guideDrug][key];
@@ -1531,60 +1549,87 @@ export default function App() {
   // 결과 화면 상단에 띄울 "내가 고른 조건" 한 문장
   const selectionSummary = useMemo(() => {
     const parts = [];
-    if (q1Idx) parts.push(`${Q1_SHORT[q1Idx - 1]}으로`);
-    if (q2Idx) parts.push(`${Q2_SHORT[q2Idx - 1]}를 원하시고`);
-    if (smellIdx.length > 0) parts.push(`${smellIdx.map((i) => Q3_SHORT[i - 1]).join("·")}는 피하고 싶고`);
+    if (q1Idx) {
+      const t = Q1_SHORT[q1Idx - 1];
+      parts.push(`${t}${instrumentalParticle(t)}`);
+    }
+    if (q2Idx) {
+      const f = Q2_SHORT[q2Idx - 1];
+      parts.push(`${f}${objectParticle(f)} 원하시고`);
+    }
+    if (smellIdx.length > 0) {
+      const s = smellIdx.map((i) => Q3_SHORT[i - 1]).join("·");
+      parts.push(`${s}${topicParticle(s)} 피하고 싶고`);
+    }
     else parts.push("향은 다 괜찮고");
-    if (seasonIdx.length > 0) parts.push(`${seasonIdx.map((i) => Q4_SHORT[i - 1]).join(" 또는 ")}을 고르셨어요`);
+    if (seasonIdx.length > 0) {
+      const k = seasonIdx.map((i) => Q4_SHORT[i - 1]).join(" 또는 ");
+      parts.push(`${k}${objectParticle(k)} 고르셨어요`);
+    }
     const head = parts.join(", ");
     const cook = !skipCookStep && q5Idx ? ` 조리는 '${Q5_SHORT[q5Idx - 1]}' 기준이에요.` : "";
-    const foods = foodSelection.length > 0
-      ? ` 오늘 고르신 식품은 ${foodSelection.slice(0, 5).join(", ")}${foodSelection.length > 5 ? ` 외 ${foodSelection.length - 5}가지` : ""}예요.`
-      : "";
+    let foods = "";
+    if (foodSelection.length > 0) {
+      const list = foodSelection.slice(0, 5).join(", ");
+      const tail = foodSelection.length > 5 ? ` 외 ${foodSelection.length - 5}가지` : "";
+      const last = tail ? "가지" : foodSelection[Math.min(4, foodSelection.length - 1)];
+      foods = ` 오늘 고르신 식품은 ${list}${tail}${copula(last)}.`;
+    }
     return `오늘은 ${head}.${cook}${foods}`;
   }, [q1Idx, q2Idx, smellIdx, seasonIdx, q5Idx, skipCookStep, foodSelection]);
 
   const emptyGuide = useMemo(() => {
+    const cookJump = skipCookStep ? [] : [STEP_LINKS.cook];
+    const condText = skipCookStep ? "향·간" : "향·간·조리시간";
     switch (plan.reason) {
       case "combo":
         return { text: "고르신 식감과 식사 형태 조합에 해당하는 메뉴가 없어요. 다른 형태를 골라보세요.", jumps: [STEP_LINKS.form] };
       case "filtered":
         return {
-          text: `고르신 식품으로 만들 수 있는 메뉴가 ${plan.blockedCount}가지 있는데, 오늘 고르신 향·간·조리시간 조건에 걸려 모두 빠졌어요. 아래 조건을 완화하면 다시 나타나요.`,
-          jumps: [STEP_LINKS.smell, STEP_LINKS.season, STEP_LINKS.cook],
+          text: `고르신 식품으로 만들 수 있는 메뉴가 ${plan.blockedCount}가지 있는데, 오늘 고르신 ${condText} 조건에 걸려 모두 빠졌어요. 아래 조건을 완화하면 다시 나타나요.`,
+          jumps: [STEP_LINKS.smell, STEP_LINKS.season, ...cookJump],
         };
       case "mainRole": {
         const parts = (plan.needs || []).map((r) => {
           const foods = (plan.options || {})[r] || [];
           return foods.length > 0 ? `${ROLE_LABEL[r]}로 쓸 수 있는 식품(${foods.join(", ")})` : ROLE_LABEL[r];
         });
-        return { text: `지금 남은 후보 메뉴들은 ${parts.join("와 ")} 중 최소 한 가지가 필요한데 아직 고르지 않으셨어요.`, jumps: [STEP_LINKS.food, STEP_LINKS.smell, STEP_LINKS.season, STEP_LINKS.cook] };
+        return { text: `지금 남은 후보 메뉴들은 ${parts.join("와 ")} 중 최소 한 가지가 필요한데 아직 고르지 않으셨어요.`, jumps: [STEP_LINKS.food, STEP_LINKS.smell, STEP_LINKS.season, ...cookJump] };
       }
       case "empty":
-        return { text: "고르신 조건과 식품으로 만들 수 있는 메뉴를 찾지 못했어요. 곡류·단백질 식품을 몇 가지 더 고르거나, 아래 조건을 조금 완화해 보세요.", jumps: [STEP_LINKS.food, STEP_LINKS.smell, STEP_LINKS.season, STEP_LINKS.cook] };
+        return { text: "고르신 조건과 식품으로 만들 수 있는 메뉴를 찾지 못했어요. 곡류·단백질 식품을 몇 가지 더 고르거나, 아래 조건을 조금 완화해 보세요.", jumps: [STEP_LINKS.food, STEP_LINKS.smell, STEP_LINKS.season, ...cookJump] };
       default:
         return { text: "조건에 맞는 메뉴를 찾지 못했어요.", jumps: [STEP_LINKS.food] };
     }
-  }, [plan]);
+  }, [plan, skipCookStep]);
+
+  const shownMenuNames = useMemo(
+    () => new Set([
+      ...plan.items.map((m) => m.name),
+      ...extraSuggestions.slice(0, 6).map((m) => m.name),
+    ]),
+    [plan, extraSuggestions]
+  );
 
   // "또 뭐가 있지?" — 고른 식품으로 만들 수 있는 다른 메뉴.
   const morePool = useMemo(() => {
     if (foodSelection.length === 0) return [];
-    const already = new Set(plan.items.map((i) => i.id));
+    const seenName = new Set();
     return [...MENUS, ...SUBS]
       .filter(
         (m) =>
-          !already.has(m.id) &&
+          !shownMenuNames.has(m.name) &&
           usableSauces(m.sauceIds, smellIdx).length > 0 &&
           (m.q3 ? smellIdx.every((i) => bit(m.q3, i)) : subPassesSmell(m, smellIdx)) &&
           meetsMainRoles(m, foodSelection) &&
           m.ing.some((i) => foodSelection.includes(i[0]))
       )
+      .filter((m) => (seenName.has(m.name) ? false : (seenName.add(m.name), true)))
       .map((m) => {
         const fit = conditionFit(m, answers);
         return { ...m, fitRate: fit.rate, fitTotal: fit.total };
       });
-  }, [foodSelection, smellIdx, answers, plan]);
+  }, [foodSelection, smellIdx, answers, shownMenuNames]);
 
   const moreTotal = useMemo(() => uniq(morePool.map((m) => m.name)).length, [morePool]);
   const moreFitCount = useMemo(
@@ -1817,7 +1862,6 @@ export default function App() {
   const FOOD_STEP_TOTAL = 6;
   const stepCard = (title, desc, body, nextLabel) => {
     const stepNo = currentStep;
-    const shown = skipCookStep && stepNo === 6 ? 5 : stepNo;
     const total = skipCookStep ? 5 : FOOD_STEP_TOTAL;
     return (
       <div className="flex flex-col gap-5">
@@ -2038,7 +2082,7 @@ export default function App() {
                 <input type="number" placeholder="65" value={guideCurrentWeight} onChange={(e) => setGuideCurrentWeight(e.target.value)} className="w-full px-4 py-3 rounded-xl text-sm" style={{ border: `1px solid ${C.line}`, background: C.card, color: C.ink }} />
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-3">투여 받으시는 GLP-1 비만치료제의 종류</label>
+                <label className="block text-sm font-semibold mb-3">투여받으시는 GLP-1 비만치료제의 종류</label>
                 <div className="flex gap-2">
                   {[{ id: "wegovy", label: "위고비" }, { id: "mounjaro", label: "마운자로" }].map((d) => (
                     <button type="button" key={d.id} onClick={() => setGuideDrug(d.id)} className="chip px-4 py-2 rounded-full text-sm font-medium" style={chipStyle(guideDrug === d.id)}>{d.label}</button>
@@ -2046,7 +2090,7 @@ export default function App() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">현재까지 투여 받으신 기간 (주차)</label>
+                <label className="block text-sm font-medium mb-2">현재까지 투여받으신 기간 (주차)</label>
                 <input type="number" placeholder="12" value={guideWeeks} onChange={(e) => setGuideWeeks(e.target.value)} className="w-full px-4 py-3 rounded-xl text-sm" style={{ border: `1px solid ${C.line}`, background: C.card, color: C.ink }} />
               </div>
               <div>
@@ -2076,7 +2120,7 @@ export default function App() {
             <div className="rounded-[22px] p-6 md:p-7 flex flex-col gap-3" style={{ background: C.card, border: `1px solid ${C.line}` }}>
               {weightResult.averages.map((a) => (
                 <p key={a.dose} className="text-sm leading-relaxed">
-                  {DRUG_SHORT[guideDrug]}{a.dose} {weightResult.closestWeek}주차의 사람들의 평균 체중 감량률은 <strong style={{ color: C.blueDeep }}>{a.value}</strong>예요.
+                  {DRUG_SHORT[guideDrug]}{a.dose} {weightResult.closestWeek}주차 사람들의 평균 체중 감량률은 <strong style={{ color: C.blueDeep }}>{a.value}</strong>예요.
                 </p>
               ))}
               {Number(guideWeeks) !== weightResult.closestWeek && (
@@ -2087,7 +2131,7 @@ export default function App() {
               <div>
                 <h3 className="font-display text-base font-semibold mb-1.5">임상시험 참고 자료</h3>
                 <p className="text-xs leading-relaxed" style={{ color: C.ink60 }}>
-                  {weightResult.meta.who}에게 {DRUG_SHORT[guideDrug]}를 투여한 {weightResult.meta.panel} 자료예요. 그래프의 동그라미가 지금 내 위치예요.
+                  {weightResult.meta.who}에게 {DRUG_SHORT[guideDrug]}를 투여한 {weightResult.meta.panel} 자료예요. {weightResult.lossRate < 0 ? "체중이 늘어난 경우는 이 그래프에 표시하지 않았어요." : "관찰 범위 안이라면 그래프에 동그라미로 표시했어요."}
                 </p>
               </div>
               <div>
@@ -2223,7 +2267,7 @@ export default function App() {
               ))}
             </div>
 
-            {/* [채민 파트] 이렇게도 먹어볼 수 있어요 */}
+            {/* 이렇게도 먹어볼 수 있어요 */}
             {extraFoods.length > 0 && (
               <div className="rounded-[20px] p-4 flex flex-col gap-3" style={{ background: C.bluePale }}>
                 <div className="flex items-start justify-between gap-3">
@@ -2260,7 +2304,7 @@ export default function App() {
         {flowType === "food" && currentStep === 101 && (
           <div className="flex flex-col gap-8">
             <div className="rounded-[26px] p-6 md:p-8 flex flex-col gap-2" style={{ background: C.sageDeep }}>
-              <span className="font-mono text-xs tracking-widest" style={{ color: "#A8AEE0" }}>{Q2_FORM[q2Idx - 1]?.split("(")[0]}</span>
+              <span className="font-mono text-xs tracking-widest" style={{ color: "#A8AEE0" }}>{Q2_SHORT[q2Idx - 1]}</span>
               <h2 className="font-display text-[26px] md:text-[30px] font-semibold leading-[1.35]" style={{ color: "#fff" }}>
                 {plan.kind === "table" && plan.setting ? plan.setting.label : "당신을 위한 추천 식사"}
               </h2>
@@ -2276,7 +2320,7 @@ export default function App() {
               <h3 className="font-display text-base font-semibold px-1">{plan.kind === "table" ? "오늘의 상차림" : "추천 메뉴"}</h3>
               {plan.items.length > 0 ? (
                 plan.items.map((m) => (
-                  <MenuToggleCard key={m.id} item={m} selected={foodSelection} sauces={sauceFor(m)} expanded={!!expandedMenus[`plan:${m.id}`]} onToggle={() => toggleExpandedMenu(`plan:${m.id}`)} />
+                  <MenuToggleCard key={`${m.kind || "x"}:${m.id}:${m.name}`} item={m} selected={foodSelection} sauces={sauceFor(m)} expanded={!!expandedMenus[`plan:${m.id}`]} onToggle={() => toggleExpandedMenu(`plan:${m.id}`)} />
                 ))
               ) : (
                 <div className="rounded-[20px] p-4 flex flex-col gap-3" style={{ background: C.apricotPale }}>
@@ -2297,17 +2341,20 @@ export default function App() {
               )}
             </div>
 
-            {/* [채민 파트] 추가로 고른 식품이 들어간 메뉴 — 추천 메뉴와 똑같이 토글로 */}
+            {/* 추가로 고른 식품이 들어간 메뉴 — 추천 메뉴와 똑같이 토글로 */}
             {extraSuggestions.length > 0 && (
               <div className="rounded-[26px] p-5 md:p-7" style={{ background: C.bluePale }}>
                 <h3 className="font-display text-base font-semibold mb-1.5" style={{ color: C.blueDeep }}>이렇게도 먹어볼 수 있어요</h3>
                 <p className="text-xs mb-4 leading-relaxed" style={{ color: "#5A7C83" }}>
-                  추가로 고르신 {extraSelection.join(", ")}이(가) 들어간 메뉴예요. 눌러서 재료와 양념을 확인해보세요.
+                  {(() => {
+                    const list = extraSelection.join(", ");
+                    return `추가로 고르신 ${list}${subjectParticle(list)} 들어간 메뉴예요. 눌러서 재료와 양념을 확인해보세요.`;
+                  })()}
                 </p>
                 <div className="flex flex-col gap-2">
                   {extraSuggestions.slice(0, 6).map((m) => (
                     <MenuToggleCard
-                      key={m.id}
+                      key={`${m.kind || "x"}:${m.id}:${m.name}`}
                       item={{ ...m, kind: "extra" }}
                       selected={[...foodSelection, ...extraSelection]}
                       sauces={sauceFor(m)}
@@ -2331,7 +2378,7 @@ export default function App() {
                 <div className="flex flex-col gap-2">
                   {moreMenus.map((m) => (
                     <MenuToggleCard
-                      key={m.id}
+                      key={`${m.kind || "x"}:${m.id}:${m.name}`}
                       item={{ ...m, kind: "more" }}
                       selected={[...foodSelection, ...extraSelection]}
                       sauces={sauceFor(m)}
