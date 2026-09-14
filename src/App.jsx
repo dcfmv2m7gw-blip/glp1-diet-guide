@@ -33,10 +33,10 @@ const C = {
 const GUIDE_DATA = {
   general: {
     title: "일반적 권고사항",
-    menuNote: "선택 없이 전체 내용 보기",
+    menuNote: "공통 식생활 권고사항 보기",
   },
   stage: {
-    title: "Stage",
+    title: "투약 단계",
     question: "다음 중 자신에게 해당하는 투여 Stage를 선택해주세요",
     options: [
       { id: "stage1", label: "Stage 1: 약물 증량기", description: "현재 GLP-1 비만치료제를 투여 중이며, 시작 용량 또는 증량 과정에 있음" },
@@ -1821,13 +1821,13 @@ export default function App() {
             {/* 왼쪽: 소개 (데스크톱에서는 옆으로, 모바일에서는 위로) */}
             <div className="lg:flex-1 lg:pt-2">
               <span className="font-mono text-xs tracking-widest px-3 py-1.5 rounded-full" style={{ background: C.sagePale, color: C.sageDeep }}>
-                GLP食(지엘피식)
+                다시,채움
               </span>
               <h1 className="font-display text-[30px] md:text-[38px] font-semibold leading-[1.3] mt-6" style={{ color: C.ink }}>
-                천천히,<br />그리고 충분하게
+                내 몸에 맞는 식사를 다시 찾아가는 시간
               </h1>
               <p className="mt-4 max-w-md text-sm md:text-base leading-relaxed" style={{ color: C.ink60 }}>
-                GLP-1 복용자를 위한 맞춤 권고와 오늘의 식사 선택을 확인해보세요.
+                GLP-1 계열 비만치료제 투여자를 위한 맞춤 권고와 오늘의 식사 선택 플랫폼이에요. 먼저 권고사항을 확인한 뒤, 오늘의 식사를 선택해 보세요!
               </p>
             </div>
 
