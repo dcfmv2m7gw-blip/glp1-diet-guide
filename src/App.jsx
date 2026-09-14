@@ -1861,8 +1861,8 @@ export default function App() {
   // 단계 화면 공통 틀. 진행 상황을 위에 얇은 막대로 항상 보여준다.
   const FOOD_STEP_TOTAL = 6;
   const stepCard = (title, desc, body, nextLabel) => {
-    const stepNo = currentStep;
     const total = skipCookStep ? 5 : FOOD_STEP_TOTAL;
+    const shown = skipCookStep && currentStep > 5 ? currentStep - 1 : currentStep;
     return (
       <div className="flex flex-col gap-5">
         <div className="flex items-center gap-3">
