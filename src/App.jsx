@@ -1821,10 +1821,10 @@ export default function App() {
             {/* 왼쪽: 소개 (데스크톱에서는 옆으로, 모바일에서는 위로) */}
             <div className="lg:flex-1 lg:pt-2">
               <span className="font-mono text-xs tracking-widest px-3 py-1.5 rounded-full" style={{ background: C.sagePale, color: C.sageDeep }}>
-                다시,채움
+                내 몸에 맞는 식사를 다시 찾아가는 시간
               </span>
               <h1 className="font-display text-[30px] md:text-[38px] font-semibold leading-[1.3] mt-6" style={{ color: C.ink }}>
-                내 몸에 맞는 식사를 다시 찾아가는 시간
+                다시, 채움
               </h1>
               <p className="mt-4 max-w-md text-sm md:text-base leading-relaxed" style={{ color: C.ink60 }}>
                 GLP-1 계열 비만치료제 투여자를 위한 맞춤 권고와 오늘의 식사 선택 플랫폼이에요. 먼저 권고사항을 확인한 뒤, 오늘의 식사를 선택해 보세요!
