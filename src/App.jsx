@@ -317,21 +317,21 @@ const WEIGHT_FIGURE_META = {
 };
 
 // ══════════════════════════════════════════════════════════════════
-// 1인 1회 분량 참고표 (변경 없음)
+// 1인 1회 분량 참고표
 // ══════════════════════════════════════════════════════════════════
 const PORTION_IMAGE_KEYS = ["grain_rice", "grain_noodle", "grain_bread", "protein_beef", "protein_pork", "protein_mackerel", "veg_sprout", "veg_spinach", "veg_kimchi", "fruit_apple", "fruit_tangerine", "fruit_grape", "milk_milk", "milk_yogurt", "fat_oil", "fat_butter", "fat_mayo"];
 
 const PORTION_IMAGES = Object.fromEntries(PORTION_IMAGE_KEYS.map((key) => [key, `${import.meta.env.BASE_URL}images/portion/${key}.jpg`]));
 
 const PORTION_REFERENCE = {
-  footnote: "*표시는 0.3회, †표시는 0.5회",
+  footnote: "* 공기 = 밥그릇(소), 컵 = 컵(소) 200ml, 1작은술 = 5ml",
   source: "출처: 당뇨병 식품교환표 활용지침, 대한당뇨병학회, 2023",
   groups: [
-    { name: "곡류군", icon: "🍚", items: [{ name: "쌀밥", amount: "70g", img: "grain_rice" }, { name: "국수(말린 것)", amount: "30g", img: "grain_noodle" }, { name: "식빵 1쪽*", amount: "35g", img: "grain_bread" }] },
-    { name: "어육류군", icon: "🍗", items: [{ name: "쇠고기", amount: "생 40g", img: "protein_beef" }, { name: "돼지고기", amount: "생 40g", img: "protein_pork" }, { name: "고등어", amount: "생 50g", img: "protein_mackerel" }] },
-    { name: "채소군", icon: "🥬", items: [{ name: "콩나물", amount: "생 70g", img: "veg_sprout" }, { name: "익힌 시금치", amount: "70g", img: "veg_spinach" }, { name: "배추김치", amount: "생 50g", img: "veg_kimchi" }] },
-    { name: "과일군", icon: "🍎", items: [{ name: "사과", amount: "100g", img: "fruit_apple" }, { name: "귤", amount: "100g", img: "fruit_tangerine" }, { name: "포도", amount: "80g", img: "fruit_grape" }] },
-    { name: "우유군", icon: "🥛", items: [{ name: "우유", amount: "200ml", img: "milk_milk" }, { name: "호상요구르트", amount: "100g", img: "milk_yogurt" }] },
+    { name: "곡류군", icon: "🍚", items: [{ name: "쌀밥 1/3공기", amount: "70g", img: "grain_rice" }, { name: "국수(말린 것)", amount: "30g", img: "grain_noodle" }, { name: "식빵 1쪽", amount: "35g", img: "grain_bread" }] },
+    { name: "어육류군", icon: "🍗", items: [{ name: "쇠고기", amount: "생 40g", img: "protein_beef" }, { name: "돼지고기", amount: "생 40g", img: "protein_pork" }, { name: "고등어 소 1토막", amount: "생 50g", img: "protein_mackerel" }] },
+    { name: "채소군", icon: "🥬", items: [{ name: "콩나물", amount: "생 70g", img: "veg_sprout" }, { name: "익힌 시금치 1/3컵", amount: "70g", img: "veg_spinach" }, { name: "배추김치 6~7개", amount: "생 50g", img: "veg_kimchi" }] },
+    { name: "과일군", icon: "🍎", items: [{ name: "사과 1/2개", amount: "100g", img: "fruit_apple" }, { name: "귤 대 1개", amount: "100g", img: "fruit_tangerine" }, { name: "포도 9알", amount: "80g", img: "fruit_grape" }] },
+    { name: "우유군", icon: "🥛", items: [{ name: "우유 1컵", amount: "200ml", img: "milk_milk" }, { name: "호상요구르트 1/2컵", amount: "100g", img: "milk_yogurt" }] },
     { name: "지방군", icon: "🫒", items: [{ name: "콩기름 1작은술", amount: "5g", img: "fat_oil" }, { name: "버터 1작은술", amount: "5g", img: "fat_butter" }, { name: "마요네즈", amount: "8g", img: "fat_mayo" }] },
   ],
 };
@@ -375,6 +375,11 @@ const EXTRA_FOODS_BY_Q1 = {
   2: ["백미", "고구마", "달걀", "두부", "굴", "게", "단호박", "무"],
   3: ["달걀", "두부"],
 };
+
+// "이렇게도 먹어볼 수 있어요" 존 자체를 띄우지 않을 조합
+const EXTRA_ZONE_OFF = [{ q1Idx: 1, q2Idx: 5 }];
+const extraZoneHidden = (a) =>
+  EXTRA_ZONE_OFF.some((rule) => Object.entries(rule).every(([k, v]) => a[k] === v));
 
 // 화면에서만 감출 선택지. DB는 건드리지 않는다.
 //  · Q1=2에서 Q2=1(마시는 형태)  — 계란 수프 1개만 걸려 있어 선택지로 띄우지 않는다
@@ -442,6 +447,19 @@ const VITAMIN_META = {
   potassium: { label: "칼륨",     color: "#D8AC08", shape: "triangleDown" },
 };
 
+// 받침 유무로 을/를을 고른다. "비타민 D"처럼 영문자로 끝나는 이름은 읽는 소리로 판정한다.
+const ALPHA_HAS_FINAL = { L: 1, M: 1, N: 1, R: 1, X: 1 };
+function hasFinalConsonant(word) {
+  const ch = (word || "").trim().slice(-1);
+  if (!ch) return false;
+  const code = ch.charCodeAt(0);
+  if (code >= 0xac00 && code <= 0xd7a3) return (code - 0xac00) % 28 !== 0;
+  const up = ch.toUpperCase();
+  if (up >= "A" && up <= "Z") return !!ALPHA_HAS_FINAL[up];
+  return false;
+}
+const objectParticle = (word) => (hasFinalConsonant(word) ? "을" : "를");
+
 const FOOD_NUTRIENTS = {
   // 비타민 D
   연어: ["vitD"], 고등어: ["vitD", "vitE"], 달걀: ["vitD", "vitA"], 건표고버섯: ["vitD"], 조기: ["vitD"], 꽁치: ["vitD"],
@@ -462,19 +480,6 @@ const FOOD_NUTRIENTS = {
 
 // Q1=3에서 "이렇게도 먹어볼 수 있어요" 후보로 쓰는 식품 목록 (별표 표시 용도는 아님)
 const ESSENTIAL_FOODS = ["현미", "귀리", "두부", "달걀", "건표고버섯", "시금치", "딸기", "블루베리", "저지방 우유", "무가당 플레인 요거트", "해바라기씨", "호박씨"];
-
-const FOOD_CAUTIONS = [
-  { foods: ["백미"], text: "통곡물보다 식이섬유·미량영양소가 적어 평상시 우선 선택으로 권장하지는 않지만, 투여 초기·증량기이거나 오심·복부팽만·설사가 있는 시기에는 자극이 적어 활용할 수 있어요." },
-  { foods: ["렌틸콩", "검정콩", "병아리콩"], text: "영양밀도가 높지만 대장에서 가스를 만들어 복부팽만을 유발할 수 있어요. 투여 초기나 팽만감이 있을 때는 소량부터 드세요." },
-  { foods: ["연어", "고등어", "등푸른생선", "꽁치"], text: "흰살생선보다 지방이 많아 오심·설사·역류가 심할 때는 부담이 될 수 있어요. 그럴 땐 대구 등 흰살생선으로 잠시 바꿔보세요." },
-  { foods: ["브로콜리", "양배추", "케일", "콜리플라워", "배추"], text: "영양적으로 우수하지만 일부에서는 장내 발효로 가스와 복부팽만을 일으킬 수 있어요." },
-  { foods: ["토마토"], text: "속쓰림·역류 증상을 악화시킬 수 있어요. 속쓰림이 심하면 피하는 편이 좋아요." },
-  { foods: ["귤", "오렌지"], text: "산미가 속쓰림이나 역류를 유발할 수 있어요." },
-  { foods: ["사과", "배", "키위"], text: "설사가 지속되는 동안에는 권하지 않아요." },
-  { foods: ["아마씨", "치아씨"], text: "변비가 있을 때 도움이 될 수 있어요." },
-  { foods: ["저지방 우유", "무가당 플레인 요거트", "코티지치즈"], text: "유당불내증이 있거나 설사 중이라면 락토프리 제품으로 대체하세요." },
-  { foods: ["오트밀", "통밀빵", "통밀파스타"], text: "가당 제품·첨가당이 많은 제품은 피하고 무가당·저나트륨 제품으로 고르세요." },
-];
 
 // ══════════════════════════════════════════════════════════════════
 // 추천 엔진
@@ -748,11 +753,15 @@ function optionAvailability(a) {
     const hidden = hiddenOptions(a, tag);
     return new Set(values.filter((v) => !hidden.has(v) && multiOptionEnabled(a, key, v)));
   };
+  const singleArr = (key, tag, values) => {
+    const hidden = hiddenOptions(a, tag);
+    return new Set(values.filter((v) => !hidden.has(v) && hasAnyCandidate({ ...a, [key]: [v] })));
+  };
   return {
     q1: single("q1Idx", "q1", [1, 2, 3]),
     q2: single("q2Idx", "q2", [1, 2, 3, 4, 5]),
     q3: multi("smellIdx", "q3", [1, 2, 3, 4, 5]),
-    q4: multi("seasonIdx", "q4", [1, 2, 3]),
+    q4: singleArr("seasonIdx", "q4", [1, 2, 3]),
     q5: single("q5Idx", "q5", [1, 2, 3, 4]),
   };
 }
@@ -792,6 +801,7 @@ function buildFoodCandidates(a) {
 
 function buildExtraFoods(a, mainNames) {
   if (!a.q1Idx) return [];
+  if (extraZoneHidden(a)) return [];
   const base = [...(EXTRA_FOODS_BY_Q1[a.q1Idx] || [])];
   if (a.q1Idx === 3) base.push(...ESSENTIAL_FOODS);
   const hidden = new Set(a.smellIdx.flatMap((i) => Q3_HIDE_FOODS[i] || []));
@@ -802,6 +812,7 @@ function buildExtraFoods(a, mainNames) {
 // 메모대로 typeB(상차림 구성요소: 국·탕 / 찌개·전골 / 주찬 / 부찬)를 먼저 보여주고,
 // 그 재료를 쓰는 구성요소가 없는 식품(예: 백미·고구마)만 typeA 단독 메뉴로 채운다.
 function buildExtraSuggestions(a, extraPicked) {
+  if (extraZoneHidden(a)) return [];
   if (extraPicked.length === 0) return [];
   const hitOf = (m) => uniq(m.ing.filter((i) => extraPicked.includes(i[0])).map((i) => i[0]));
   const isMainRole = (m, f) => m.ing.some((i) => i[0] === f && (i[1] === "1" || i[1] === "2"));
@@ -856,10 +867,6 @@ function drawMenus(pool, seen, count, justShown) {
 
 const SUB_ROLE_BY_FORM = { G: "국·탕", J: "찌개·전골", M: "주찬", B: "부찬" };
 const subRoleLabel = (item) => (item.q2 ? null : SUB_ROLE_BY_FORM[item.formId[0]] || null);
-
-function cautionsFor(selected) {
-  return FOOD_CAUTIONS.map((c) => ({ ...c, hit: c.foods.filter((f) => selected.includes(f)) })).filter((c) => c.hit.length > 0);
-}
 
 function itemVitamins(item, selected) {
   const set = new Set();
@@ -1191,7 +1198,7 @@ function GeneralGuideSection({ section, open, onToggle }) {
 }
 
 function GeneralGuideView() {
-  const [openIds, setOpenIds] = useState(() => GENERAL_GUIDE.map((s) => s.id));
+  const [openIds, setOpenIds] = useState([]);
   const allOpen = openIds.length === GENERAL_GUIDE.length;
   const toggle = (id) => setOpenIds((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
   return (
@@ -1242,26 +1249,6 @@ function PortionReferenceCard() {
             <p>정해진 섭취량이 아니라, 식품군별로 "1회 분량"이 대략 어느 정도인지 눈으로 감을 잡기 위한 참고 자료예요.</p>
           </div>
           <div>
-            <p className="font-display text-base font-semibold mb-3">1인 1회 분량</p>
-            <div className="flex flex-col gap-4">
-              {PORTION_REFERENCE.groups.map((g) => (
-                <div key={g.name} className="rounded-2xl p-4" style={{ background: C.card, border: `1px solid ${C.line}` }}>
-                  <p className="text-xs font-semibold flex items-center gap-1.5 mb-3" style={{ color: C.sageDeep }}><span>{g.icon}</span>{g.name}</p>
-                  <ul className="grid grid-cols-3 gap-3 m-0 p-0 list-none">
-                    {g.items.map((it) => (
-                      <li key={it.name} className="flex flex-col gap-1.5">
-                        <PortionThumb imgKey={it.img} alt={`${it.name} ${it.amount}`} />
-                        <span className="text-xs leading-tight text-center">{it.name}</span>
-                        <span className="font-mono text-[11px] text-center" style={{ color: C.ink60 }}>{it.amount}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-          <p className="text-xs leading-relaxed" style={{ color: C.ink60 }}>{PORTION_REFERENCE.footnote}<br />{PORTION_REFERENCE.source}</p>
-          <div>
             <p className="font-display text-base font-semibold mb-3">{CALORIE_PATTERN.title}</p>
             <div className="overflow-x-auto rounded-2xl" style={{ border: `1px solid ${C.line}`, background: C.card }}>
               <table className="w-full text-xs" style={{ borderCollapse: "collapse", minWidth: 460 }}>
@@ -1282,6 +1269,26 @@ function PortionReferenceCard() {
               </table>
             </div>
             <p className="text-xs leading-relaxed mt-2" style={{ color: C.ink60 }}>{CALORIE_PATTERN.source}</p>
+          </div>
+          <div>
+            <p className="font-display text-base font-semibold mb-3">1인 1회 분량</p>
+            <div className="flex flex-col gap-4">
+              {PORTION_REFERENCE.groups.map((g) => (
+                <div key={g.name} className="rounded-2xl p-4" style={{ background: C.card, border: `1px solid ${C.line}` }}>
+                  <p className="text-xs font-semibold flex items-center gap-1.5 mb-3" style={{ color: C.sageDeep }}><span>{g.icon}</span>{g.name}</p>
+                  <ul className="grid grid-cols-3 gap-3 m-0 p-0 list-none">
+                    {g.items.map((it) => (
+                      <li key={it.name} className="flex flex-col gap-1.5">
+                        <PortionThumb imgKey={it.img} alt={`${it.name} ${it.amount}`} />
+                        <span className="text-xs leading-tight text-center">{it.name}</span>
+                        <span className="font-mono text-[11px] text-center" style={{ color: C.ink60 }}>{it.amount}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs leading-relaxed mt-3" style={{ color: C.ink60 }}>{PORTION_REFERENCE.footnote}<br />{PORTION_REFERENCE.source}</p>
           </div>
         </div>
       )}
@@ -1329,6 +1336,7 @@ function MenuToggleCard({ item, selected, sauces, expanded, onToggle, mode = "se
   })).filter((g) => g.foods.length > 0);
   const vitaminBase = showAll ? item.ing.map((i) => i[0]) : selected;
   const vitamins = itemVitamins(item, vitaminBase);
+  const vitaminText = vitamins.map((v) => VITAMIN_META[v].label).join(", ");
   const badge = item.label || roleTag;
   return (
     <div className="rounded-[20px] overflow-hidden" style={{ background: C.card, border: `1px solid ${expanded ? C.sage : C.line}`, transition: "border-color 0.15s ease" }}>
@@ -1377,7 +1385,7 @@ function MenuToggleCard({ item, selected, sauces, expanded, onToggle, mode = "se
               <span className="inline-flex items-center gap-1">
                 {vitamins.map((v) => <VitaminMark key={v} nutrient={v} size={10} />)}
               </span>
-              이 메뉴로 {vitamins.map((v) => VITAMIN_META[v].label).join(", ")}를 채워볼까요?
+              이 메뉴로 {vitaminText}{objectParticle(vitaminText)} 채워볼까요?
             </p>
           )}
         </div>
@@ -1480,7 +1488,6 @@ export default function App() {
   }, [extraFoods]);
 
   const sauceFor = (item) => displaySauces(item.sauceIds, smellIdx, seasonIdx);
-  const cautions = useMemo(() => cautionsFor([...foodSelection, ...extraSelection]), [foodSelection, extraSelection]);
 
   // 결과 화면 상단에 띄울 "내가 고른 조건" 한 문장
   const selectionSummary = useMemo(() => {
@@ -1550,7 +1557,6 @@ export default function App() {
   };
 
   const toggleIn = (setter) => (v) => setter((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]));
-  const toggleSeason = toggleIn(setSeasonIdx);
   const toggleFood = toggleIn(setFoodSelection);
   const toggleExtra = toggleIn(setExtraSelection);
   const toggleSmell = (v) => {
@@ -1805,7 +1811,7 @@ export default function App() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
         .font-display { font-family: 'IBM Plex Sans KR', sans-serif; letter-spacing: -0.03em; }
-        .font-body { font-family: 'IBM Plex Sans KR', sans-serif; letter-spacing: -0.01em; }
+        .font-body { font-family: 'IBM Plex Sans KR', sans-serif; letter-spacing: -0.01em; word-break: keep-all; overflow-wrap: break-word; }
         .font-mono { font-family: 'IBM Plex Mono', monospace; letter-spacing: 0; }
         .chip { transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
         .lift { transition: transform 0.15s ease, box-shadow 0.15s ease; }
@@ -2091,15 +2097,8 @@ export default function App() {
 
         {flowType === "food" && currentStep === 4 && stepCard(
           "4단계: 간과 풍미",
-          "오늘 식사의 간과 풍미는 어느 정도가 좋을까요? (복수 선택)",
-          chipGroup("seasonIdx", [1, 2, 3], seasonIdx, setSeasonIdx, avail.q4,
-            Q4_SEASONING.map((t, i) => {
-              const on = seasonIdx.includes(i + 1);
-              return (
-                <button key={t} type="button" onClick={() => toggleSeason(i + 1)} className="chip px-4 py-2 rounded-full text-sm font-medium" style={chipStyle(on, C.sageDeep)}>{t}</button>
-              );
-            })
-          ),
+          "오늘 식사의 간과 풍미는 어느 정도가 좋을까요?",
+          renderChoiceList(Q4_SEASONING, seasonIdx[0] || 0, (idx) => setSeasonIdx([idx]), avail.q4),
           skipCookStep ? "식품 고르기" : "다음"
         )}
 
@@ -2137,8 +2136,7 @@ export default function App() {
             <div className="rounded-2xl p-3.5 flex items-start gap-2.5 text-xs leading-relaxed" style={{ background: C.apricotPale, color: C.apricotDeep }}>
               <Info size={14} style={{ flexShrink: 0, marginTop: 1 }} />
               <span>
-                메뉴는 <strong>주재료 1</strong>과 <strong>주재료 2</strong> 두 자리로 만들어져요. 예를 들어 덮밥은 곡류(주재료 1)와 고기·생선·달걀·콩류(주재료 2)를 각각 하나씩 필요로 해요.
-                한쪽만 고르면 그 메뉴는 추천되지 않으니, <strong>곡류·단백질 식품을 골고루</strong> 담아주세요.
+                한 가지 식품군만 고르면 만들 수 있는 메뉴가 적어요. <strong>식품군을 골고루 담아주세요.</strong>
               </span>
             </div>
 
@@ -2199,17 +2197,6 @@ export default function App() {
                     );
                   })}
                 </div>
-              </div>
-            )}
-
-            {cautions.length > 0 && (
-              <div className="rounded-2xl p-4 flex flex-col gap-2" style={{ background: C.sageTint }}>
-                <p className="text-xs font-semibold" style={{ color: C.sageDeep }}>고르신 식품에 대해 알아두면 좋은 점</p>
-                {cautions.map((c) => (
-                  <p key={c.text} className="text-xs leading-relaxed" style={{ color: C.ink60 }}>
-                    <strong style={{ color: C.ink }}>{c.hit.join(", ")}</strong> — {c.text}
-                  </p>
-                ))}
               </div>
             )}
 
