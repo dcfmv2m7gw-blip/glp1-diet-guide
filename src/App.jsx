@@ -37,7 +37,7 @@ const GUIDE_DATA = {
   },
   stage: {
     title: "투약 단계",
-    question: "다음 중 자신에게 해당하는 투여 Stage를 선택해주세요",
+    question: "다음 중 자신에게 해당하는 투약 단계를 선택해주세요",
     options: [
       { id: "stage1", label: "Stage 1: 약물 증량기", description: "현재 GLP-1 비만치료제를 투여 중이며, 시작 용량 또는 증량 과정에 있음" },
       { id: "stage2", label: "Stage 2: 약물 용량 유지기", description: "현재 GLP-1 비만치료제를 투여 중이며, 의료진이 권장하는 목표 유지 용량에 도달함" },
@@ -351,10 +351,10 @@ const CALORIE_PATTERN = {
 // 5문항 (2026-09 개정 / typeB 2026-09-11 반영)
 // 배열 인덱스 0 = 선택지 1번. DB의 비트문자열과 자리수가 1:1로 대응한다.
 // ══════════════════════════════════════════════════════════════════
-const Q1_TEXTURE = ["치아로 씹어 먹고 싶어요", "혀와 입천장으로 쉽게 으깰 수 있는 느낌이 좋아요", "1,2번 다 별로예요"];
-const Q2_FORM = ["마시는 것이 좋아요", "쉽게 떠먹는 것이 좋아요", "핑거푸드가 좋아요", "혼합형 한그릇(덮밥, 비빔밥, 포케)이 좋아요", "반찬을 포함한 일반식이 좋아요"];
+const Q1_TEXTURE = ["치아로 씹어 먹고 싶어요", "혀와 입천장으로 쉽게 으깨서 먹고 싶어요", "씹고 싶지 않아요"];
+const Q2_FORM = ["마시는 것이 좋아요", "쉽게 떠먹는 것이 좋아요", "핑거푸드가 좋아요", "한그릇 요리가 좋아요", "반찬을 포함한 일반식이 좋아요"];
 const Q3_SMELL = ["수산물의 비린내는 피하고 싶어요", "고기의 누린내는 피하고 싶어요", "발효·숙성 향(쿰쿰함)은 피하고 싶어요", "마늘·양파 등 향신료 향은 피하고 싶어요", "오이·수박 향은 피하고 싶어요"];
-const Q4_SEASONING = ["재료 본연의 맛을 즐길래요", "담백하고 삼삼하게 먹고 싶어요", "양념이 필요해요"];
+const Q4_SEASONING = ["재료 본연의 맛을 살려 먹고 싶어요", "담백하고 삼삼하게 먹고 싶어요", "양념과 함께 먹고 싶어요"];
 const Q5_COOKTIME = ["바로 먹을래요", "데우기만 하고 먹을래요", "15분 이내로 조리해서 먹을래요", "조리할 시간이 충분해요"];
 
 // 결과 화면 요약 문장에 쓰는 짧은 표현
@@ -1841,7 +1841,7 @@ export default function App() {
                 <span>
                   <span className="block font-display text-xl font-semibold mb-1.5" style={{ color: "#fff" }}>권고사항</span>
                   <span className="block text-sm leading-relaxed" style={{ color: "#B9BEE8" }}>
-                    Stage · 부작용 · 식욕별 맞춤 안내를 확인해요
+                    투약단계 · 부작용 · 식욕별 맞춤 안내 확인
                   </span>
                 </span>
                 <span
@@ -2074,7 +2074,7 @@ export default function App() {
         )}
 
         {flowType === "food" && currentStep === 3 && stepCard(
-          "3단계: 냄새 민감도",
+          "3단계: 냄새",
           "오늘 특히 민감하게 느껴지는 향이 있나요? (복수 선택, 없으면 '다 괜찮아요')",
           chipGroup("smellIdx", [1, 2, 3, 4, 5], smellIdx, (v) => { setSmellAllOk(false); setSmellIdx(v); }, avail.q3,
             Q3_SMELL.map((label, i) => {
