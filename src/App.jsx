@@ -2143,11 +2143,11 @@ export default function App() {
                 <p className="text-xs leading-relaxed mt-1" style={{ color: C.ink40 }}>자료 출처: {weightResult.meta.source}</p>
               </div>
               <div>
-                <WeightTableView table={weightResult.table} closestWeek={weightResult.closestWeek} />
-                <p className="text-xs leading-relaxed mt-3" style={{ color: C.ink60 }}>
+                <p className="text-xs leading-relaxed mb-3" style={{ color: C.ink60 }}>
                   <strong style={{ color: C.ink }}>{weightResult.meta.tableNo}.</strong>{" "}
                   {weightResult.meta.who}에서 {weightResult.meta.drug} 투여에 따른 주차별 평균 누적 체중감량률: {weightResult.meta.panel} 그래프 디지타이징 추정치
                 </p>
+                <WeightTableView table={weightResult.table} closestWeek={weightResult.closestWeek} />
                 <p className="text-xs leading-relaxed mt-1" style={{ color: C.ink40 }}>자료 출처: {weightResult.meta.source}</p>
               </div>
             </div>
