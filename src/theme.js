@@ -16,5 +16,5 @@ export const TONE = {
 };
 
 export const FONT_STEPS = [
-  { px: 16, name: "기본" }, { px: 18, name: "크게" }, { px: 20, name: "아주 크게" },
+  { px: 14, name: "작게" }, { px: 16, name: "기본" }, { px: 18, name: "크게" }, { px: 20, name: "아주 크게" },
 ];

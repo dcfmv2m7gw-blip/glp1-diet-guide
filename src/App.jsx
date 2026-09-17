@@ -1393,7 +1393,14 @@ function MenuToggleCard({ item, selected, sauces, expanded, onToggle, mode = "se
 }
 
 export default function App() {
-  const [fontStep, setFontStep] = useState(() => typeof window === "undefined" ? 0 : Math.min(2, Math.max(0, Number(window.localStorage.getItem("glp1-font-step")) || 0)));
+  const [fontStep, setFontStep] = useState(() => {
+    if (typeof window === "undefined") return 1;
+    const saved = window.localStorage.getItem("glp1-font-step-v2");
+    if (saved !== null) return Math.min(FONT_STEPS.length - 1, Math.max(0, Number(saved) || 0));
+    // 기존 3단계 설정(0~2)은 새 4단계 목록에서 한 칸 뒤로 옮겨, 사용자가 선택한 크기를 유지한다.
+    const previous = Number(window.localStorage.getItem("glp1-font-step"));
+    return Number.isFinite(previous) ? Math.min(FONT_STEPS.length - 1, Math.max(0, previous + 1)) : 1;
+  });
   const [showWelcome, setShowWelcome] = useState(true);
   const [flowType, setFlowType] = useState(null); // "food" | "guide" | null
   const [currentStep, setCurrentStep] = useState(0);
@@ -1495,7 +1502,7 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.style.fontSize = `${FONT_STEPS[fontStep].px}px`;
-    window.localStorage.setItem("glp1-font-step", String(fontStep));
+    window.localStorage.setItem("glp1-font-step-v2", String(fontStep));
   }, [fontStep]);
 
   const sauceFor = (item) => displaySauces(item.sauceIds, smellIdx, seasonIdx);
@@ -1876,7 +1883,7 @@ export default function App() {
       {!showWelcome && <div className="sticky top-0 z-40" style={{ background: C.bg }}>
         <div className="max-w-2xl md:max-w-3xl lg:max-w-5xl mx-auto px-5 py-2 flex justify-end">
           <div role="group" aria-label="글자 크기" className="flex items-end gap-1 rounded-full p-1" style={{ background: C.card, border: `1px solid ${C.line}` }}>
-            {FONT_STEPS.map((s, i) => <button key={s.name} type="button" aria-label={`글자 크기 ${s.name}`} aria-pressed={fontStep === i} onClick={() => setFontStep(i)} className="rounded-full w-9 h-9 font-semibold" style={{ fontSize: `${13 + i * 3}px`, ...(fontStep === i ? { background: C.sageDeep, color: "#fff" } : { color: C.ink60 }) }}>가</button>)}
+            {FONT_STEPS.map((s, i) => <button key={s.name} type="button" aria-label={`글자 크기 ${s.name}`} aria-pressed={fontStep === i} onClick={() => setFontStep(i)} className="rounded-full w-9 h-9 font-semibold" style={{ fontSize: `${10 + i * 3}px`, ...(fontStep === i ? { background: C.sageDeep, color: "#fff" } : { color: C.ink60 }) }}>가</button>)}
           </div>
         </div>
       </div>}
