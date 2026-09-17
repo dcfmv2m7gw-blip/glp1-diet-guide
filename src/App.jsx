@@ -5,7 +5,7 @@ import {
   HomeScreen, GuideHomeScreen, WeightInputScreen, Field, UnitInput, Segmented, ChoiceRow, FoodStepShell,
   PageHead, BrandLogo, RichText, GuidePoint,
 } from "./DesignParts";
-import { C, FONT_STEPS, TONE } from "./theme.js";
+import { C, FONT_STEPS, TONE } from "./theme";
 
 // ══════════════════════════════════════════════════════════════════
 // 권고사항
@@ -1338,11 +1338,11 @@ function MenuToggleCard({ item, selected, sauces, expanded, onToggle, mode = "se
       <button type="button" onClick={onToggle} className="w-full flex items-center gap-3 px-4 py-3.5 text-left">
         <div className="flex items-center justify-center rounded-2xl flex-shrink-0" style={{ width: 52, height: 52, fontSize: "1.625rem", background: C.sageTint }}>{GROUP_ICON[item.kind] || "🍽️"}</div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm truncate">
+          <p className="result-title-scroll font-semibold text-sm" aria-label={`${item.name}${item.fitTotal > 0 && item.fitRate === 1 ? " · 조건 충족" : ""}`}>
             {badge ? <span className="font-mono text-xs mr-1.5 px-2 py-0.5 rounded-full" style={{ background: C.sagePale, color: C.sageDeep }}>{badge}</span> : null}
             {item.name}
             {item.fitTotal > 0 && item.fitRate === 1 && (
-              <span className="font-mono text-xs ml-1.5 px-2 py-0.5 rounded-full" style={{ background: C.sageTint, color: C.sageDeep }}>오늘 조건 맞음</span>
+              <span className="font-mono text-xs ml-1.5 px-2 py-0.5 rounded-full" style={{ background: C.sageTint, color: C.sageDeep }}>조건 충족</span>
             )}
           </p>
           {item.formName && <p className="text-sm mt-1" style={{ color: C.ink40 }}>{item.formName}</p>}
@@ -1867,6 +1867,10 @@ export default function App() {
         .welcome-coral-dot { position: absolute; width: 22px; height: 22px; border-radius: 999px; background: ${C.apricot}; top: 15%; right: 15%; box-shadow: 0 8px 20px rgba(255,123,99,0.22); }
         input::placeholder { color: ${C.ink40}; }
         input:focus { outline: none; border-color: ${C.sage} !important; box-shadow: 0 0 0 3px ${C.sagePale}; }
+        /* 큰 글자에서 메뉴명·상태 배지가 한 줄을 넘으면, 휴대폰에서 좌우로 밀어 확인한다. */
+        .result-title-scroll { max-width: 100%; overflow-x: auto; overflow-y: hidden; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+        .result-title-scroll::-webkit-scrollbar { height: 3px; }
+        .result-title-scroll::-webkit-scrollbar-thumb { background: ${C.sagePale}; border-radius: 999px; }
       `}</style>
 
       {!showWelcome && <div className="sticky top-0 z-40" style={{ background: C.bg }}>
