@@ -1,31 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
-import { ChevronRight, ChevronLeft, Info, RotateCcw, ChevronDown, ChevronUp, Shuffle, AlertCircle } from "lucide-react";
+import { ChevronRight, ChevronLeft, Info, RotateCcw, ChevronDown, ChevronUp, Shuffle, AlertCircle, Check, AlertTriangle, Ban } from "lucide-react";
 import { MENUS as RAW_MENUS, SUBS as RAW_SUBS, RICE as RAW_RICE, SAUCES as RAW_SAUCES, FOODS as RAW_FOODS } from "./menuData";
-
-// 페리윙클 팔레트.
-//  · sage* 3형제 = 페리윙클(주조색). 키 이름은 기존 코드가 전부 참조하고 있어 그대로 둔다.
-//  · apricot* = 코랄. 주의·경고와 아주 작은 포인트에만 쓴다.
-//  · blue*    = 틸. 체중 변화와 "이렇게도 먹어볼 수 있어요" 영역 구분용.
-const C = {
-  bg: "#F4F5FA",
-  ink: "#14162E",
-  ink60: "#5F6699",
-  ink40: "#9095BC",
-  sage: "#6B72C4",
-  sageDeep: "#383E8C",
-  sagePale: "#E4E7F6",
-  sageTint: "#EDEFF9",
-  card: "#FFFFFF",
-  line: "#E1E4F3",
-  apricot: "#FF8A5B",
-  apricotDeep: "#BE4D26",
-  apricotPale: "#FFF1EA",
-  blue: "#4E9AA8",
-  blueDeep: "#2E6D7A",
-  bluePale: "#E5F1F3",
-  shadowSm: "0 1px 2px rgba(20,22,46,0.04)",
-  shadowMd: "0 2px 4px rgba(20,22,46,0.04), 0 12px 28px -16px rgba(20,22,46,0.28)",
-};
+import {
+  HomeScreen, GuideHomeScreen, WeightInputScreen, Field, UnitInput, Segmented, ChoiceRow, FoodStepShell,
+  PageHead, BrandLogo, RichText, GuidePoint,
+} from "./DesignParts";
+import { C, FONT_STEPS, TONE } from "./theme.js";
 
 // ══════════════════════════════════════════════════════════════════
 // 권고사항
@@ -47,13 +27,13 @@ const GUIDE_DATA = {
       stage1: {
         title: "Stage 1: 약물 증량기",
         goal: "위장관 장애 완화와 탈수 및 영양 부족 예방",
+        lead: "처음 투여를 시작하거나 용량을 늘릴 때는 메스꺼움, 구토, 설사, 변비, 복통 등의 위장관 장애가 흔하게 나타날 수 있으나, 대개 시간이 지나며 증상이 완화돼요.",
         points: [
-          "처음 투여를 시작하거나 용량을 늘릴 때는 메스꺼움, 구토, 설사, 변비, 복통 등의 위장관 장애가 흔하게 나타날 수 있으나, 대개 시간이 지나며 증상이 완화돼요.",
-          "한 끼에 무리해서 많이 먹기보다는 소량을 규칙적으로 드세요.",
-          "전체 식사량이 줄어드는 만큼 근육 손실을 막기 위해 달걀, 두부, 살코기 등 단백질 식품을 우선적으로 드세요.",
-          "구토나 설사를 할 때는 탈수를 예방하기 위해 수분을 충분히 보충하세요.",
-          "섬유질이 많은 채소나 과일을 한 번에 많이 먹을 경우 복부 팽만감이나 더부룩함이 심해질 수 있으니 주의하세요.",
-          "위장관 장애가 심하다면 기름진 튀김류 음식과 자극적인 음식을 피하세요.",
+          { tone: "good", text: "한 끼에 무리해서 많이 먹기보다는 **소량을 규칙적으로** 드세요." },
+          { tone: "good", text: "달걀, 두부, 살코기 등 **단백질 식품을 우선적으로** 드세요." },
+          { tone: "good", text: "구토나 설사를 할 때는 탈수를 예방하기 위해 **수분을 충분히 보충**하세요." },
+          { tone: "care", text: "섬유질이 많은 채소나 과일을 **한 번에 많이** 먹을 경우 복부 팽만감이나 더부룩함이 심해질 수 있으니 주의하세요." },
+          { tone: "avoid", text: "위장관 장애가 심하다면 **기름진 튀김류 음식과 자극적인 음식**을 피하세요." },
         ],
       },
       stage2: {
@@ -83,14 +63,14 @@ const GUIDE_DATA = {
     options: [
       { id: "nausea", label: "오심", description: "속이 울렁거리거나 토할 것 같은 느낌이 있나요? 음식 냄새만으로 메스꺼운 경우도 포함돼요." },
       { id: "vomiting", label: "구토", description: "음식물이나 물을 실제로 토했나요?" },
-      { id: "diarrhea", label: "설사", description: "대변이 진흙처럼 묽거나 물 형태로 자주 나오나요? 하루 3회 이상이거나 평소보다 횟수가 뚜렷이 증가한 경우도 포함돼요." },
+      { id: "diarrhea", label: "설사", description: "대변이 **진흙처럼 묽거나 물 형태**로 자주 나오나요? **하루 3회 이상**이거나 평소보다 횟수가 뚜렷이 증가한 경우도 포함돼요." },
       { id: "constipation", label: "변비", description: "대변이 토끼똥처럼 딱딱하게 굳어 있어 배변 시 힘을 많이 주어야 하나요? 주 3회 미만이거나 배변 후 잔변감이 남는 경우도 포함돼요." },
       { id: "pancreatitis", label: "급성 췌장염", description: "상복부에서 서서히 또는 갑자기 복부 통증이 시작되어 등까지 통증이 퍼지거나 길게 지속되나요? 지속적인 메스꺼움과 구토, 식은땀이나 음식을 먹기 어려울 정도의 복통이 나타나나요?" },
       { id: "gallstone", label: "급성 담낭 질환(담석증)", description: "수 시간 동안 윗배 통증이 나타나고 통증이 등까지 퍼지나요? 피부나 눈 흰자위가 노랗게 변하는 황달이나 진한 소변, 발열 또는 오한이 나타나나요?" },
       { id: "abdominal", label: "복통·소화불량·복부 팽창·트림·가스 참 등", description: "식후 더부룩함, 잦은 트림, 복부 팽만감 또는 지나치게 가스가 차는 등 불편함이 있나요?" },
       { id: "headache", label: "두통 및 어지럼증", description: "지속적인 두통이 있나요?" },
       { id: "hypoglycemia", label: "저혈당증", description: "식은땀, 떨림, 두근거림, 갑작스러운 허기, 어지럼증, 혼란, 시야 흐림 등이 있나요?" },
-      { id: "hairLoss", label: "탈모·모발 소실", description: "머리를 감거나 빗을 때 평소보다 머리카락이 많이 빠지나요?" },
+      { id: "hairLoss", label: "탈모·모발 소실", description: "머리를 감거나 빗을 때 **평소보다 머리카락이 많이** 빠지나요?" },
       { id: "other", label: "기타", description: "위 문항에 해당하지 않는 다른 증상이 있어요." },
     ],
     recommendations: {
@@ -1050,42 +1030,7 @@ function FoodLabel({ name, size = "text-sm" }) {
 
 // 화면 맨 위에 오는 제목 블록. 예전에는 연두색 큰 덩어리였는데,
 // 배경을 없애고 타이포만으로 위계를 만든다.
-function PageHead({ eyebrow, title, desc, tone = "sage" }) {
-  const fg = tone === "blue" ? C.blueDeep : C.sageDeep;
-  return (
-    <div className="pt-1">
-      {eyebrow && (
-        <p className="font-mono text-xs tracking-widest mb-3" style={{ color: fg }}>{eyebrow}</p>
-      )}
-      <h2 className="font-display text-[26px] md:text-[32px] font-semibold leading-[1.35]" style={{ color: C.ink }}>{title}</h2>
-      {desc && <p className="text-sm leading-relaxed mt-3" style={{ color: C.ink60 }}>{desc}</p>}
-      <div style={{ height: 1, background: C.line, marginTop: 22 }} />
-    </div>
-  );
-}
-
-function RichText({ text }) {
-  return <>{text.split("**").map((part, i) => (i % 2 === 1 ? <strong key={i} style={{ color: C.ink }}>{part}</strong> : <span key={i}>{part}</span>))}</>;
-}
-
-function GuidePoint({ point }) {
-  const head = typeof point === "string" ? null : point.head;
-  const body = typeof point === "string" ? point : point.body;
-  return (
-    <li className="flex gap-3 text-sm leading-relaxed">
-      <span
-        aria-hidden="true"
-        style={{ width: 5, height: 5, borderRadius: "50%", background: C.sage, flexShrink: 0, marginTop: 9 }}
-      />
-      <span>
-        {head && <strong className="block mb-1.5" style={{ color: C.sageDeep }}>{head}</strong>}
-        <span style={{ color: head ? C.ink60 : C.ink }}>{body}</span>
-      </span>
-    </li>
-  );
-}
-
-function WeightTrendChart({ table, userWeek, userRate }) {
+function WeightTrendChart({ table, userWeek, userRate, fontStep = 0 }) {
   const W = 480, H = 300, P = { l: 40, r: 14, t: 26, b: 42 };
   const weeks = table.weeks;
   const maxWeek = weeks[weeks.length - 1];
@@ -1109,11 +1054,11 @@ function WeightTrendChart({ table, userWeek, userRate }) {
   return (
     <div>
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: "block" }} role="img" aria-label="주차별 평균 누적 체중감량률 그래프">
-        <text x={6} y={12} fontSize={10} fill={C.ink60}>체중 변화(%)</text>
+        <text x={6} y={12} fontSize={13 + fontStep} fill={C.ink60}>체중 변화(%)</text>
         {yTicks.map((v) => (
           <g key={v}>
             <line x1={P.l} x2={W - P.r} y1={y(v)} y2={y(v)} stroke={v === 0 ? C.ink60 : C.line} strokeWidth={1} strokeDasharray={v === 0 ? "4 3" : undefined} opacity={v === 0 ? 0.45 : 1} />
-            <text x={P.l - 6} y={y(v) + 4} textAnchor="end" fontSize={11} fill={C.ink40} fontFamily="IBM Plex Mono, monospace">{v === 0 ? "0" : `-${v}`}</text>
+            <text x={P.l - 6} y={y(v) + 4} textAnchor="end" fontSize={13 + fontStep} fill={C.ink40} fontFamily="IBM Plex Mono, monospace">{v === 0 ? "0" : `-${v}`}</text>
           </g>
         ))}
         {entries.map(([label, vs], si) => {
@@ -1126,14 +1071,9 @@ function WeightTrendChart({ table, userWeek, userRate }) {
             </g>
           );
         })}
-        {userVisible && (
-          <g>
-            <circle cx={x(userWeek)} cy={y(userRate)} r={7} fill={C.apricot} stroke="#fff" strokeWidth={2.5} />
-            <text x={x(userWeek)} y={y(userRate) - 13} textAnchor="middle" fontSize={11} fontWeight={700} fill={C.apricotDeep}>나</text>
-          </g>
-        )}
-        {weeks.map((w) => <text key={w} x={x(w)} y={H - P.b + 16} textAnchor="middle" fontSize={11} fill={C.ink40} fontFamily="IBM Plex Mono, monospace">{w}</text>)}
-        <text x={(P.l + W - P.r) / 2} y={H - 8} textAnchor="middle" fontSize={11} fill={C.ink60}>투여 주차</text>
+        {userVisible && (() => { const px = x(userWeek), py = y(userRate); const anchor = px > W - 80 ? "end" : px < P.l + 50 ? "start" : "middle"; const ly = py - 14 < P.t + 4 ? py + 22 : py - 14; return <g><circle cx={px} cy={py} r={7} fill={C.apricot} stroke="#fff" strokeWidth={2.5} /><text x={px} y={ly} textAnchor={anchor} fontSize={13 + fontStep} fontWeight={700} fill={C.apricotDeep} stroke="#fff" strokeWidth={4} paintOrder="stroke">나 ({userWeek}주, -{userRate.toFixed(1)}%)</text></g>; })()}
+        {weeks.map((w) => <text key={w} x={x(w)} y={H - P.b + 16} textAnchor="middle" fontSize={13 + fontStep} fill={C.ink40} fontFamily="IBM Plex Mono, monospace">{w}</text>)}
+        <text x={(P.l + W - P.r) / 2} y={H - 8} textAnchor="middle" fontSize={13 + fontStep} fill={C.ink60}>투여 주차</text>
       </svg>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
         {entries.map(([label], i) => (
@@ -1159,7 +1099,7 @@ function WeightTableView({ table, closestWeek }) {
   const cell = { padding: "8px 11px", borderBottom: `1px solid ${C.line}` };
   return (
     <div className="overflow-x-auto rounded-2xl" style={{ border: `1px solid ${C.line}`, background: C.card }}>
-      <table className="w-full text-xs" style={{ borderCollapse: "collapse", minWidth: entries.length > 1 ? 320 : 220 }}>
+      <table className="w-full text-sm" style={{ borderCollapse: "collapse", minWidth: entries.length > 1 ? 320 : 220 }}>
         <thead>
           <tr style={{ background: C.sageTint, color: C.sageDeep }}>
             <th style={{ ...cell, textAlign: "left", fontWeight: 600 }}>주차</th>
@@ -1204,22 +1144,23 @@ function VitaminLegend() {
 }
 
 function GoodBadTable({ good, avoid }) {
-  const col = (label, items, mark, color, bg) => (
-    <div className="rounded-2xl p-4" style={{ background: bg }}>
-      <p className="text-xs font-semibold mb-3 flex items-center gap-1.5" style={{ color }}>
+  const col = (label, items, mark) => {
+    const tone = mark === "+" ? TONE.good : TONE.avoid;
+    return <div className="rounded-2xl p-4" style={{ background: tone.bg }}>
+      <p className="text-xs font-semibold mb-3 flex items-center gap-1.5" style={{ color: tone.fg }}>
         <span className="font-mono" style={{ fontSize: 13 }}>{mark}</span>
         {label}
       </p>
       <ul className="flex flex-col gap-2 m-0 p-0 list-none">
         {items.map((t) => (
           <li key={t} className="flex gap-2 text-sm leading-relaxed" style={{ color: C.ink }}>
-            <span aria-hidden="true" style={{ color, flexShrink: 0 }}>{mark}</span>
+            <span aria-hidden="true" style={{ color: tone.fg, flexShrink: 0 }}>{mark}</span>
             <span>{t}</span>
           </li>
         ))}
       </ul>
-    </div>
-  );
+    </div>;
+  };
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {col("권장할 요소", good, "+", C.sageDeep, C.sageTint)}
@@ -1232,10 +1173,10 @@ function GeneralGuideSection({ section, open, onToggle }) {
   return (
     <div className="rounded-[22px] overflow-hidden" style={{ background: C.card, border: `1px solid ${C.line}` }}>
       <button type="button" onClick={onToggle} className="w-full flex items-center gap-3.5 px-5 py-4 md:px-6 md:py-5 text-left">
-        <div className="flex items-center justify-center rounded-2xl flex-shrink-0" style={{ width: 42, height: 42, fontSize: 20, background: C.sageTint }}>{section.icon}</div>
+        <div className="flex items-center justify-center rounded-2xl flex-shrink-0" style={{ width: 52, height: 52, fontSize: "1.625rem", background: C.sageTint }}>{section.icon}</div>
         <div className="flex-1 min-w-0">
           <p className="font-display text-base font-semibold">{section.title}</p>
-          <p className="text-xs mt-0.5" style={{ color: C.ink40 }}>{section.summary}</p>
+          <p className="text-sm mt-0.5" style={{ color: C.ink40 }}>{section.summary}</p>
         </div>
         {open ? <ChevronUp size={17} style={{ color: C.ink40 }} /> : <ChevronDown size={17} style={{ color: C.ink40 }} />}
       </button>
@@ -1243,7 +1184,7 @@ function GeneralGuideSection({ section, open, onToggle }) {
         <div className="px-5 pt-5 pb-5 md:px-6 md:pb-6 flex flex-col gap-4" style={{ borderTop: `1px solid ${C.line}` }}>
           {section.blocks.map((b, i) =>
             b.type === "table" ? <GoodBadTable key={i} good={b.good} avoid={b.avoid} />
-              : <ul key={i} className="flex flex-col gap-4 m-0 p-0 list-none"><GuidePoint point={b.text} /></ul>
+              : <ul key={i} className="flex flex-col gap-4 m-0 p-0 list-none"><GuidePoint point={b} /></ul>
           )}
         </div>
       )}
@@ -1289,23 +1230,23 @@ function PortionReferenceCard() {
   return (
     <div className="rounded-[22px] overflow-hidden" style={{ background: C.card, border: `1px solid ${C.line}` }}>
       <button type="button" onClick={() => setOpen(!open)} className="w-full flex items-center gap-3.5 px-5 py-4 md:px-6 md:py-5 text-left">
-        <div className="flex items-center justify-center rounded-2xl flex-shrink-0" style={{ width: 42, height: 42, fontSize: 20, background: C.sageTint }}>🍽️</div>
+        <div className="flex items-center justify-center rounded-2xl flex-shrink-0" style={{ width: 52, height: 52, fontSize: "1.625rem", background: C.sageTint }}>🍽️</div>
         <div className="flex-1 min-w-0">
           <p className="font-display text-base font-semibold">얼마나 먹으면 될까요?</p>
-          <p className="text-xs mt-0.5" style={{ color: C.ink40 }}>식품군별 1인 1회 분량과 권장 식사 패턴을 확인해보세요 (참고용)</p>
+          <p className="text-sm mt-0.5" style={{ color: C.ink40 }}>식품군별 1인 1회 분량과 권장 식사 패턴을 확인해보세요 (참고용)</p>
         </div>
         {open ? <ChevronUp size={17} style={{ color: C.ink40 }} /> : <ChevronDown size={17} style={{ color: C.ink40 }} />}
       </button>
       {open && (
         <div className="px-5 pb-5 md:px-6 md:pb-6 flex flex-col gap-6" style={{ borderTop: `1px solid ${C.line}` }}>
-          <div className="rounded-2xl p-4 mt-5 flex items-start gap-2.5 text-xs leading-relaxed" style={{ background: C.sageTint, color: C.ink60 }}>
+          <div className="rounded-2xl p-4 mt-5 flex items-start gap-2.5 text-sm leading-relaxed" style={{ background: C.sageTint, color: C.ink60 }}>
             <Info size={14} style={{ flexShrink: 0, marginTop: 1 }} />
             <p>정해진 섭취량이 아니라, 식품군별로 "1회 분량"이 대략 어느 정도인지 눈으로 감을 잡기 위한 참고 자료예요.</p>
           </div>
           <div>
             <p className="font-display text-base font-semibold mb-3">{CALORIE_PATTERN.title}</p>
             <div className="overflow-x-auto rounded-2xl" style={{ border: `1px solid ${C.line}`, background: C.card }}>
-              <table className="w-full text-xs" style={{ borderCollapse: "collapse", minWidth: 460 }}>
+              <table className="w-full text-sm" style={{ borderCollapse: "collapse", minWidth: 460 }}>
                 <thead>
                   <tr style={{ background: C.sageTint, color: C.sageDeep }}>
                     <th style={{ padding: "8px 10px", textAlign: "left", fontWeight: 600 }}>열량(kcal)</th>
@@ -1335,7 +1276,7 @@ function PortionReferenceCard() {
                       <li key={it.name} className="flex flex-col gap-1.5">
                         <PortionThumb imgKey={it.img} alt={`${it.name} ${it.amount}`} />
                         <span className="text-xs leading-tight text-center">{it.name}</span>
-                        <span className="font-mono text-[11px] text-center" style={{ color: C.ink60 }}>{it.amount}</span>
+                        <span className="font-mono text-xs text-center" style={{ color: C.ink60 }}>{it.amount}</span>
                       </li>
                     ))}
                   </ul>
@@ -1355,21 +1296,21 @@ function SauceChips({ sauces }) {
   const open = sauces.find((s) => s.id === openId);
   return (
     <div>
-      <p className="text-xs font-semibold mb-2" style={{ color: C.ink60 }}>
+      <p className="text-sm font-semibold mb-2" style={{ color: C.ink60 }}>
         오늘 조건에 맞는 양념<span className="font-normal"> — 눌러서 무엇으로 만드는지 확인해보세요</span>
       </p>
       <div className="flex flex-wrap gap-1.5">
         {sauces.map((s) => {
           const on = s.id === openId;
           return (
-            <button key={s.id} type="button" onClick={() => setOpenId(on ? null : s.id)} className="chip text-xs px-2.5 py-1.5 rounded-full" style={{ background: on ? C.apricotDeep : C.apricotPale, color: on ? "#fff" : C.apricotDeep }}>
+            <button key={s.id} type="button" onClick={() => setOpenId(on ? null : s.id)} className="chip text-xs px-2.5 py-1.5 rounded-full" style={{ background: on ? C.sageDeep : C.sageTint, color: on ? "#fff" : C.sageDeep }}>
               {s.name}
             </button>
           );
         })}
       </div>
       {open && (
-        <p className="text-xs leading-relaxed mt-2.5 rounded-xl px-3 py-2.5" style={{ background: C.apricotPale, color: C.apricotDeep }}>
+        <p className="text-sm leading-relaxed mt-2.5 rounded-xl px-3 py-2.5" style={{ background: C.sageTint, color: C.sageDeep }}>
           <strong>{open.name}</strong>{" — "}
           {open.parts && open.parts !== "없음" ? `${open.parts}${instrumentalParticle(open.parts)} 만들어요.` : "따로 양념하지 않고 재료 본연의 맛으로 드세요."}
         </p>
@@ -1395,23 +1336,23 @@ function MenuToggleCard({ item, selected, sauces, expanded, onToggle, mode = "se
   return (
     <div className="rounded-[20px] overflow-hidden" style={{ background: C.card, border: `1px solid ${expanded ? C.sage : C.line}`, transition: "border-color 0.15s ease" }}>
       <button type="button" onClick={onToggle} className="w-full flex items-center gap-3 px-4 py-3.5 text-left">
-        <div className="flex items-center justify-center rounded-2xl flex-shrink-0" style={{ width: 42, height: 42, fontSize: 20, background: C.sageTint }}>{GROUP_ICON[item.kind] || "🍽️"}</div>
+        <div className="flex items-center justify-center rounded-2xl flex-shrink-0" style={{ width: 52, height: 52, fontSize: "1.625rem", background: C.sageTint }}>{GROUP_ICON[item.kind] || "🍽️"}</div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm truncate">
-            {badge ? <span className="font-mono text-[10px] mr-1.5 px-2 py-0.5 rounded-full" style={{ background: C.sagePale, color: C.sageDeep }}>{badge}</span> : null}
+            {badge ? <span className="font-mono text-xs mr-1.5 px-2 py-0.5 rounded-full" style={{ background: C.sagePale, color: C.sageDeep }}>{badge}</span> : null}
             {item.name}
             {item.fitTotal > 0 && item.fitRate === 1 && (
-              <span className="font-mono text-[10px] ml-1.5 px-2 py-0.5 rounded-full" style={{ background: C.sageTint, color: C.sageDeep }}>오늘 조건 맞음</span>
+              <span className="font-mono text-xs ml-1.5 px-2 py-0.5 rounded-full" style={{ background: C.sageTint, color: C.sageDeep }}>오늘 조건 맞음</span>
             )}
           </p>
-          {item.formName && <p className="text-xs mt-1" style={{ color: C.ink40 }}>{item.formName}</p>}
+          {item.formName && <p className="text-sm mt-1" style={{ color: C.ink40 }}>{item.formName}</p>}
         </div>
         {expanded ? <ChevronUp size={17} style={{ color: C.ink40 }} /> : <ChevronDown size={17} style={{ color: C.ink40 }} />}
       </button>
       {expanded && (
         <div className="px-4 pb-4 flex flex-col gap-3.5" style={{ borderTop: `1px solid ${C.line}` }}>
           <div className="pt-3">
-            <p className="text-xs font-semibold mb-2" style={{ color: C.ink60 }}>
+            <p className="text-sm font-semibold mb-2" style={{ color: C.ink60 }}>
               {showAll ? "이 메뉴에 들어가는 재료" : "고르신 식품 중 이 메뉴에 쓰이는 재료"}
               {showAll && <span className="font-normal"> — 고르신 식품은 진하게 표시했어요</span>}
             </p>
@@ -1419,12 +1360,12 @@ function MenuToggleCard({ item, selected, sauces, expanded, onToggle, mode = "se
               <div className="flex flex-col gap-1.5">
                 {byRole.map((g) => (
                   <div key={g.role} className="flex items-start gap-2">
-                    <span className="font-mono text-[10px] px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5" style={{ background: g.role === "1" || g.role === "2" ? C.sageDeep : C.sagePale, color: g.role === "1" || g.role === "2" ? "#fff" : C.sageDeep }}>
+                    <span className="font-mono text-xs px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5" style={{ background: g.role === "1" || g.role === "2" ? C.sageDeep : C.sagePale, color: g.role === "1" || g.role === "2" ? "#fff" : C.sageDeep }}>
                       {ROLE_LABEL[g.role]}
                     </span>
                     <span className="flex flex-wrap gap-x-3 gap-y-1">
                       {g.foods.map((n) => (
-                        <span key={n} style={showAll && selected.includes(n) ? { color: C.apricotDeep, fontWeight: 700 } : undefined}>
+                        <span key={n} style={showAll && selected.includes(n) ? { color: C.sageDeep, fontWeight: 700 } : undefined}>
                           <FoodLabel name={n} />
                         </span>
                       ))}
@@ -1452,6 +1393,8 @@ function MenuToggleCard({ item, selected, sauces, expanded, onToggle, mode = "se
 }
 
 export default function App() {
+  const [fontStep, setFontStep] = useState(() => typeof window === "undefined" ? 0 : Math.min(2, Math.max(0, Number(window.localStorage.getItem("glp1-font-step")) || 0)));
+  const [showWelcome, setShowWelcome] = useState(true);
   const [flowType, setFlowType] = useState(null); // "food" | "guide" | null
   const [currentStep, setCurrentStep] = useState(0);
   const [guideCategory, setGuideCategory] = useState(null);
@@ -1462,6 +1405,7 @@ export default function App() {
   const [guideDrug, setGuideDrug] = useState("wegovy");
   const [guideWeeks, setGuideWeeks] = useState("");
   const [guideDiabetes, setGuideDiabetes] = useState("");
+  const [weightEditOpen, setWeightEditOpen] = useState(false);
 
   // 식품 선택 흐름 — 값은 선택지 번호(1부터). 0 또는 빈 배열 = 미선택
   const [q1Idx, setQ1Idx] = useState(0);        // 1단계 식감
@@ -1487,7 +1431,7 @@ export default function App() {
   const skipCookStep = q2Idx === 5;
 
   // 첫 화면만 데스크톱에서 넓게 쓴다(2단 구성). 나머지는 읽기 좋은 폭을 유지한다.
-  const isIntro = currentStep === 0 && !flowType;
+  const isIntro = !showWelcome && currentStep === 0 && !flowType;
 
   const weightResult = useMemo(() => {
     const init = Number(guideInitialWeight);
@@ -1548,6 +1492,11 @@ export default function App() {
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [flowType, currentStep, guideCategory, guideAnswer]);
+
+  useEffect(() => {
+    document.documentElement.style.fontSize = `${FONT_STEPS[fontStep].px}px`;
+    window.localStorage.setItem("glp1-font-step", String(fontStep));
+  }, [fontStep]);
 
   const sauceFor = (item) => displaySauces(item.sauceIds, smellIdx, seasonIdx);
 
@@ -1711,6 +1660,7 @@ export default function App() {
   };
 
   const handleReset = () => {
+    setShowWelcome(false);
     setFlowType(null);
     setCurrentStep(0);
     setGuideCategory(null);
@@ -1771,9 +1721,38 @@ export default function App() {
     </div>
   );
 
-  const guideResultFooter = (retryLabel = "다시 선택") => (
-    pageFooter({ back: () => setGuideAnswer(null), backLabel: retryLabel })
+  const guideResultFooter = (retryLabel = "다시 선택", editWeight = false) => (
+    pageFooter({ back: () => editWeight ? setWeightEditOpen(true) : setGuideAnswer(null), backLabel: retryLabel })
   );
+
+  const weightFields = (
+    <>
+      <Field label="투여 시작 체중">
+        <UnitInput value={guideInitialWeight} onChange={setGuideInitialWeight} placeholder="70" unit="kg" />
+      </Field>
+      <Field label="현재 체중">
+        <UnitInput value={guideCurrentWeight} onChange={setGuideCurrentWeight} placeholder="65" unit="kg" />
+      </Field>
+      <Field label="투여 약물">
+        <Segmented
+          options={[{ value: "wegovy", label: "위고비" }, { value: "mounjaro", label: "마운자로" }]}
+          value={guideDrug}
+          onChange={setGuideDrug}
+        />
+      </Field>
+      <Field label="투여 기간">
+        <UnitInput value={guideWeeks} onChange={setGuideWeeks} placeholder="12" unit="주" />
+      </Field>
+      <Field label="제2형 당뇨병 여부">
+        <Segmented
+          options={[{ value: "예", label: "예" }, { value: "아니요", label: "아니요" }]}
+          value={guideDiabetes}
+          onChange={setGuideDiabetes}
+        />
+      </Field>
+    </>
+  );
+
 
   // 복수선택 문항의 전체 선택. 고르면 결과가 사라지는 항목은 애초에 화면에 없으므로,
   // 남아 있는(=고를 수 있는) 항목만 순서대로 담는다.
@@ -1817,46 +1796,17 @@ export default function App() {
     );
   };
 
-  const renderChoiceList = (options, value, onPick, allowed) => {
-    const visibleOptions = options
-      .map((label, i) => ({ label, idx: i + 1 }))
-      .filter(({ idx }) => !allowed || allowed.has(idx) || value === idx);
+  const renderChoiceList = (options, value, onPick, allowed) => (
+    <div className="flex flex-col gap-3">
+      {options
+        .map((label, i) => ({ label, idx: i + 1 }))
+        .filter(({ idx }) => !allowed || allowed.has(idx) || value === idx)
+        .map(({ label, idx }) => (
+          <ChoiceRow key={label} label={label} active={value === idx} onClick={() => onPick(idx)} />
+        ))}
+    </div>
+  );
 
-    return (
-      <div className="flex flex-col gap-3">
-        {visibleOptions.map(({ label, idx }, visibleIndex) => {
-          const active = value === idx;
-          return (
-            <button
-              key={label}
-              type="button"
-              onClick={() => onPick(idx)}
-              className="chip px-4 py-3.5 rounded-2xl text-left text-sm font-medium flex items-center gap-3"
-              style={{
-                background: active ? C.sageTint : C.card,
-                color: C.ink,
-                border: `1px solid ${active ? C.sage : C.line}`,
-                cursor: "pointer",
-              }}
-            >
-              <span
-                className="font-mono text-xs flex items-center justify-center rounded-full flex-shrink-0"
-                style={{
-                  width: 22,
-                  height: 22,
-                  background: active ? C.sageDeep : C.sagePale,
-                  color: active ? "#fff" : C.sageDeep,
-                }}
-              >
-                {visibleIndex + 1}
-              </span>
-              <span className="flex-1">{label}</span>
-            </button>
-          );
-        })}
-      </div>
-    );
-  };
 
   const StepJumpButtons = ({ jumps }) => (
     <div className="flex flex-wrap gap-2">
@@ -1868,67 +1818,39 @@ export default function App() {
     </div>
   );
 
-  const navButtons = (nextLabel = "다음") => {
+  const navButtons = (nextLabel = "다음 단계") => {
     const ok = canProceedStep();
     return (
-      <div className="flex flex-col gap-3 pt-2">
+      <div className="flex flex-col gap-3">
         {returnToResult && currentStep < 6 && allAnswered && (
-          <button type="button" onClick={() => { setReturnToResult(false); setCurrentStep(101); }} className="chip py-2.5 rounded-full text-sm font-medium" style={{ background: C.sageTint, color: C.sageDeep }}>
+          <button type="button" onClick={() => { setReturnToResult(false); setCurrentStep(101); }} className="chip self-start px-5 py-2.5 rounded-full text-sm font-medium" style={{ background: C.sageTint, color: C.sageDeep }}>
             결과로 바로 가기<ChevronRight size={14} className="inline ml-1" />
           </button>
         )}
-        <div className="flex gap-2.5">
-          <button type="button" onClick={handlePrev} className="chip px-5 py-3 rounded-full font-medium text-sm" style={{ background: C.card, color: C.ink60, border: `1px solid ${C.line}` }}>
-            <ChevronLeft size={16} className="inline mr-1" />이전
+        <div className="flex items-center gap-2.5">
+          <button type="button" onClick={handlePrev} className="chip px-5 py-3.5 rounded-2xl text-base font-medium" style={{ background: C.card, color: C.ink60, border: `1.5px solid ${C.line}` }}>
+            이전
           </button>
-          <button type="button" onClick={handleNext} disabled={!ok} className="chip flex-1 py-3 rounded-full font-medium text-sm text-white disabled:opacity-35" style={{ background: C.sageDeep }}>
-            {nextLabel}<ChevronRight size={16} className="inline ml-1" />
+          <button type="button" onClick={handleNext} disabled={!ok} className="chip px-7 py-3.5 rounded-2xl text-base font-semibold text-white disabled:opacity-35" style={{ background: C.sageDeep }}>
+            {nextLabel}
           </button>
         </div>
       </div>
     );
   };
 
-  // 단계 화면 공통 틀. 진행 상황을 위에 얇은 막대로 항상 보여준다.
+
   const FOOD_STEP_TOTAL = 6;
-  const stepCard = (title, desc, body, nextLabel) => {
+  const stepCard = (eyebrow, title, desc, body, nextLabel) => {
     const total = skipCookStep ? 5 : FOOD_STEP_TOTAL;
     const shown = skipCookStep && currentStep > 5 ? currentStep - 1 : currentStep;
     return (
-      <div className="flex flex-col gap-5">
-        <div className="flex items-center gap-3">
-          <button type="button" onClick={handleReset} className="chip flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full flex-shrink-0" style={{ background: C.card, color: C.ink60, border: `1px solid ${C.line}` }}>
-            <RotateCcw size={12} />처음으로
-          </button>
-          <div className="flex-1 flex items-center gap-1.5">
-            {Array.from({ length: total }, (_, i) => (
-              <span
-                key={i}
-                style={{
-                  flex: 1,
-                  height: 4,
-                  borderRadius: 999,
-                  background: i < shown ? C.sageDeep : C.sagePale,
-                  transition: "background 0.2s ease",
-                }}
-              />
-            ))}
-          </div>
-          <span className="font-mono text-xs flex-shrink-0" style={{ color: C.ink40 }}>{shown}/{total}</span>
-        </div>
-
-        <div className="rounded-[26px] p-6 md:p-8 flex flex-col gap-6" style={{ background: C.card, boxShadow: C.shadowSm, border: `1px solid ${C.line}` }}>
-          <div>
-            <h2 className="font-display text-[22px] md:text-2xl font-semibold mb-2 leading-snug">{title}</h2>
-            <p className="text-sm leading-relaxed" style={{ color: C.ink60 }}>{desc}</p>
-          </div>
-          {body}
-          {navButtons(nextLabel)}
-        </div>
-        {pageFooter()}
-      </div>
+      <FoodStepShell onReset={handleReset} total={total} current={shown} eyebrow={eyebrow} title={title} desc={desc} footer={navButtons(nextLabel)}>
+        {body}
+      </FoodStepShell>
     );
   };
+
 
   return (
     <div style={{ background: C.bg, color: C.ink, minHeight: "100vh" }} className="w-full">
@@ -1940,94 +1862,59 @@ export default function App() {
         .chip { transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
         .lift { transition: transform 0.15s ease, box-shadow 0.15s ease; }
         .lift:hover { transform: translateY(-2px); }
+        .welcome-arc { position: absolute; width: min(94vw, 930px); height: min(55vw, 500px); left: -12%; bottom: -27%; border: 34px solid ${C.sagePale}; border-top-color: transparent; border-right-color: transparent; border-radius: 48% 48% 0 0; transform: rotate(-7deg); opacity: 0.92; }
+        .welcome-arc-small { position: absolute; width: min(72vw, 670px); height: min(39vw, 350px); left: 10%; bottom: -16%; border: 18px solid ${C.sageTint}; border-top-color: transparent; border-right-color: transparent; border-radius: 48% 48% 0 0; transform: rotate(-7deg); opacity: 0.92; }
+        .welcome-coral-dot { position: absolute; width: 22px; height: 22px; border-radius: 999px; background: ${C.apricot}; top: 15%; right: 15%; box-shadow: 0 8px 20px rgba(255,123,99,0.22); }
         input::placeholder { color: ${C.ink40}; }
         input:focus { outline: none; border-color: ${C.sage} !important; box-shadow: 0 0 0 3px ${C.sagePale}; }
       `}</style>
 
-      <div className={`${isIntro ? "max-w-2xl lg:max-w-5xl" : "max-w-2xl md:max-w-3xl"} mx-auto px-5 py-10 md:py-16 font-body`}>
-        {/* 인트로 */}
-        {currentStep === 0 && !flowType && (
-          <div className="flex flex-col lg:flex-row lg:items-start gap-10 lg:gap-14">
-            {/* 왼쪽: 소개 (데스크톱에서는 옆으로, 모바일에서는 위로) */}
-            <div className="lg:flex-1 lg:pt-2">
-              <span className="font-mono text-xs tracking-widest px-3 py-1.5 rounded-full" style={{ background: C.sagePale, color: C.sageDeep }}>
-                내 몸에 맞는 식사를 다시 찾아가는 시간
-              </span>
-              <h1 className="font-display text-[30px] md:text-[38px] font-semibold leading-[1.3] mt-6" style={{ color: C.ink }}>
-                다시, 채움
+      {!showWelcome && <div className="sticky top-0 z-40" style={{ background: C.bg }}>
+        <div className="max-w-2xl md:max-w-3xl lg:max-w-5xl mx-auto px-5 py-2 flex justify-end">
+          <div role="group" aria-label="글자 크기" className="flex items-end gap-1 rounded-full p-1" style={{ background: C.card, border: `1px solid ${C.line}` }}>
+            {FONT_STEPS.map((s, i) => <button key={s.name} type="button" aria-label={`글자 크기 ${s.name}`} aria-pressed={fontStep === i} onClick={() => setFontStep(i)} className="rounded-full w-9 h-9 font-semibold" style={{ fontSize: `${13 + i * 3}px`, ...(fontStep === i ? { background: C.sageDeep, color: "#fff" } : { color: C.ink60 }) }}>가</button>)}
+          </div>
+        </div>
+      </div>}
+
+      {showWelcome ? (
+        <main className="min-h-screen flex items-center justify-center px-5 py-10 font-body overflow-hidden relative">
+          <div className="welcome-arc" aria-hidden="true" />
+          <div className="welcome-arc-small" aria-hidden="true" />
+          <div className="welcome-coral-dot" aria-hidden="true" />
+          <div className="relative z-10 w-full max-w-lg text-center flex flex-col items-center">
+            <BrandLogo />
+            <p className="text-base md:text-lg mt-7" style={{ color: C.ink60 }}>식사를 다시, 나답게</p>
+            <div className="mt-20 md:mt-24">
+              <h1 className="font-display text-[2rem] md:text-[2.625rem] font-semibold leading-[1.32]" style={{ color: C.ink }}>
+                오늘의 나를<br />가볍게 확인해 볼까요?
               </h1>
-              <p className="mt-4 max-w-md text-sm md:text-base leading-relaxed" style={{ color: C.ink60 }}>
-                GLP-1 계열 비만치료제 투여자를 위한 맞춤 권고와 오늘의 식사 선택 플랫폼이에요. 먼저 권고사항을 확인한 뒤, 식품 선택 페이지에서 오늘의 식사를 선택해 보세요!
+              <p className="mt-4 text-base leading-relaxed" style={{ color: C.ink60 }}>
+                맞춤 권고, 식품 선택, 체중 변화까지<br className="hidden sm:block" /> 필요한 정보만 차분히 담았어요.
               </p>
             </div>
-
-            {/* 오른쪽: 진입점 3개 */}
-            <div className="lg:flex-1 w-full flex flex-col gap-3">
-              <button
-                onClick={openGuideHome}
-                className="lift rounded-[26px] p-6 md:p-7 flex items-center justify-between gap-4 text-left w-full"
-                style={{ background: C.sageDeep, boxShadow: C.shadowMd }}
-              >
-                <span>
-                  <span className="block font-display text-xl font-semibold mb-1.5" style={{ color: "#fff" }}>권고사항</span>
-                  <span className="block text-sm leading-relaxed" style={{ color: "#B9BEE8" }}>
-                    투약단계 · 부작용 · 식욕별 맞춤 안내 확인
-                  </span>
-                </span>
-                <span
-                  className="flex items-center justify-center rounded-full flex-shrink-0"
-                  style={{ width: 46, height: 46, background: C.apricot }}
-                >
-                  <ChevronRight size={22} style={{ color: "#4A1C08" }} />
-                </span>
-              </button>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {[
-                  { key: "food", icon: "🥗", title: "식품 선택", desc: "오늘 입맛에 맞는 식품 추천", bg: C.apricotPale, fg: C.apricotDeep, sub: "#A2674A", onClick: () => { setFlowType("food"); setCurrentStep(1); } },
-                  { key: "weight", icon: "📈", title: "체중 변화", desc: "임상시험 자료와 내 감량률 비교", bg: C.bluePale, fg: C.blueDeep, sub: "#5A7C83", onClick: openWeight },
-                ].map((c) => (
-                  <button
-                    key={c.key}
-                    onClick={c.onClick}
-                    className="lift rounded-[20px] p-5 flex items-center text-left"
-                    style={{ background: c.bg }}
-                  >
-                    <span className="min-w-0">
-                      <span className="flex items-center gap-2 md:relative md:-top-px">
-                        <span aria-hidden="true" style={{ fontSize: 17, lineHeight: 1 }}>{c.icon}</span>
-                        <strong className="text-sm font-semibold" style={{ color: c.fg }}>{c.title}</strong>
-                      </span>
-                      <small className="block mt-1 leading-relaxed md:pl-[25px]" style={{ color: c.sub }}>{c.desc}</small>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
+            <button type="button" onClick={() => setShowWelcome(false)} className="chip w-full max-w-sm mt-10 py-4 rounded-2xl text-base font-semibold text-white" style={{ background: C.sageDeep, boxShadow: C.shadowMd }}>
+              시작하기 <ChevronRight size={18} className="inline ml-1" />
+            </button>
+            <p className="text-xs mt-3" style={{ color: C.ink40 }}>클릭하면 맞춤 식사 도우미로 이동해요</p>
+          </div>
+        </main>
+      ) : <div className={`${isIntro ? "max-w-2xl lg:max-w-5xl" : "max-w-2xl md:max-w-3xl"} mx-auto px-5 py-10 md:py-16 font-body`}>
+        {/* 인트로 */}
+        {currentStep === 0 && !flowType && (
+          <div className="max-w-2xl mx-auto">
+            <HomeScreen
+              onGuide={openGuideHome}
+              onFood={() => { setFlowType("food"); setCurrentStep(1); }}
+              onWeight={openWeight}
+              onTip={() => openGuide("general")}
+            />
           </div>
         )}
 
         {/* ===== 권고사항 흐름 ===== */}
         {flowType === "guide" && !guideCategory && (
-          <div className="flex flex-col gap-6">
-            {pageTopBar({ tag: "권고사항" })}
-            <PageHead eyebrow="GUIDE" title="권고사항" desc="확인하고 싶은 항목을 선택해주세요." />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {GUIDE_MENU.map((category) => {
-                const guide = GUIDE_DATA[category];
-                return (
-                  <button key={category} type="button" onClick={() => openGuide(category)} className="chip rounded-[20px] p-5 flex items-center justify-between gap-3 text-left" style={{ background: C.card, border: `1px solid ${C.line}` }}>
-                    <span>
-                      <strong className="block text-sm font-semibold">{guide.title}</strong>
-                      <small className="block mt-1 leading-relaxed" style={{ color: C.ink40 }}>{guide.menuNote || `${guide.options.length}가지 상태 중 선택`}</small>
-                    </span>
-                    <ChevronRight size={18} style={{ color: C.sage, flexShrink: 0 }} />
-                  </button>
-                );
-              })}
-            </div>
-            {pageFooter()}
-          </div>
+          <GuideHomeScreen onBack={handleReset} onOpen={openGuide} />
         )}
 
         {flowType === "guide" && guideCategory === "general" && (
@@ -2043,7 +1930,7 @@ export default function App() {
             {pageTopBar({ back: returnToGuideHome, backLabel: "권고사항 홈", tag: "맞춤 권고" })}
             <PageHead eyebrow={GUIDE_DATA[guideCategory].title} title={GUIDE_DATA[guideCategory].question} />
             {GUIDE_DATA[guideCategory].note && (
-              <div className="rounded-2xl p-4 flex items-start gap-2.5 text-xs leading-relaxed" style={{ background: C.sageTint, color: C.ink60 }}>
+              <div className="rounded-2xl p-4 flex items-start gap-2.5 text-sm leading-relaxed" style={{ background: C.sageTint, color: C.ink60 }}>
                 <Info size={15} style={{ flexShrink: 0, marginTop: 1, color: C.sage }} />
                 <p>{GUIDE_DATA[guideCategory].note}</p>
               </div>
@@ -2053,7 +1940,7 @@ export default function App() {
                 <button key={option.id} type="button" onClick={() => setGuideAnswer(option.id)} className="chip rounded-[20px] p-5 text-left flex items-start gap-3" style={{ background: C.card, border: `1px solid ${C.line}` }}>
                   <span className="flex-1">
                     <span className="block font-semibold text-sm">{option.label}</span>
-                    {option.description && <span className="block text-xs leading-relaxed mt-2" style={{ color: C.ink60 }}>{option.description}</span>}
+                    {option.description && <span className="block text-sm leading-relaxed mt-2" style={{ color: C.ink60 }}><RichText text={option.description} /></span>}
                   </span>
                   <ChevronRight size={18} style={{ color: C.sage, flexShrink: 0, marginTop: 1 }} />
                 </button>
@@ -2069,6 +1956,7 @@ export default function App() {
           const recommendation = guide.recommendations[guideAnswer];
           const points = Array.isArray(recommendation) ? recommendation : recommendation.points;
           const goal = Array.isArray(recommendation) ? null : recommendation.goal;
+          const lead = Array.isArray(recommendation) ? null : recommendation.lead;
           const heading = (!Array.isArray(recommendation) && recommendation.title) || selected.label;
           return (
             <div className="flex flex-col gap-6">
@@ -2080,10 +1968,11 @@ export default function App() {
                   <ul className="flex flex-col gap-4 m-0 p-0 list-none"><GuidePoint point={goal} /></ul>
                 </div>
               )}
+              {lead && <p className="rounded-2xl px-5 py-4 text-sm leading-relaxed" style={{ background: C.bg, color: C.ink60 }}>{lead}</p>}
               <div className="rounded-[22px] p-6 md:p-7" style={{ background: C.card, border: `1px solid ${C.line}` }}>
                 <h3 className="font-display text-base font-semibold mb-5">권고사항</h3>
                 <ul className="flex flex-col gap-4 m-0 p-0 list-none">
-                  {points.map((point) => <GuidePoint key={typeof point === "string" ? point : point.head} point={point} />)}
+                  {points.map((point, i) => <GuidePoint key={typeof point === "string" ? point : point.head || point.text || i} point={point} />)}
                 </ul>
               </div>
               {guideResultFooter("다시 선택")}
@@ -2092,51 +1981,23 @@ export default function App() {
         })()}
 
         {flowType === "guide" && guideCategory === "weight" && !guideAnswer && (
-          <div className="flex flex-col gap-6">
-            {pageTopBar({ tag: "체중 변화" })}
-            <PageHead eyebrow="WEIGHT" title="투여 전후 체중과 투여 정보를 입력해주세요" tone="blue" />
-            <div className="rounded-[26px] p-6 md:p-8 flex flex-col gap-5" style={{ background: C.card, border: `1px solid ${C.line}`, boxShadow: C.shadowSm }}>
-              <div>
-                <label className="block text-sm font-medium mb-2">투여 직전 또는 초기 체중 (kg)</label>
-                <input type="number" placeholder="70" value={guideInitialWeight} onChange={(e) => setGuideInitialWeight(e.target.value)} className="w-full px-4 py-3 rounded-xl text-sm" style={{ border: `1px solid ${C.line}`, background: C.card, color: C.ink }} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">현재 체중 (kg)</label>
-                <input type="number" placeholder="65" value={guideCurrentWeight} onChange={(e) => setGuideCurrentWeight(e.target.value)} className="w-full px-4 py-3 rounded-xl text-sm" style={{ border: `1px solid ${C.line}`, background: C.card, color: C.ink }} />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-3">투여받으시는 GLP-1 비만치료제의 종류</label>
-                <div className="flex gap-2">
-                  {[{ id: "wegovy", label: "위고비" }, { id: "mounjaro", label: "마운자로" }].map((d) => (
-                    <button type="button" key={d.id} onClick={() => setGuideDrug(d.id)} className="chip px-4 py-2 rounded-full text-sm font-medium" style={chipStyle(guideDrug === d.id)}>{d.label}</button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">현재까지 투여받으신 기간 (주차)</label>
-                <input type="number" placeholder="12" value={guideWeeks} onChange={(e) => setGuideWeeks(e.target.value)} className="w-full px-4 py-3 rounded-xl text-sm" style={{ border: `1px solid ${C.line}`, background: C.card, color: C.ink }} />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-3">제2형 당뇨병 여부</label>
-                <div className="flex gap-2">
-                  {["예", "아니요"].map((ans) => (
-                    <button type="button" key={ans} onClick={() => setGuideDiabetes(ans)} className="chip px-4 py-2 rounded-full text-sm font-medium" style={chipStyle(guideDiabetes === ans)}>{ans}</button>
-                  ))}
-                </div>
-              </div>
-              <button type="button" onClick={() => weightResult && setGuideAnswer("computed")} disabled={!weightResult} className="chip mt-1 py-3 rounded-full font-medium text-sm text-white disabled:opacity-35" style={{ background: C.blueDeep }}>
-                결과 보기<ChevronRight size={16} className="inline ml-1" />
-              </button>
-            </div>
-            {pageFooter()}
-          </div>
+          <WeightInputScreen
+            onBack={handleReset}
+            canSubmit={!!weightResult}
+            onSubmit={() => weightResult && setGuideAnswer("computed")}
+          >
+            {weightFields}
+          </WeightInputScreen>
         )}
 
-        {flowType === "guide" && guideCategory === "weight" && guideAnswer && weightResult && (
+        {flowType === "guide" && guideCategory === "weight" && guideAnswer && (
           <div className="flex flex-col gap-6">
-            {pageTopBar({ back: () => setGuideAnswer(null), backLabel: "다시 입력", tag: "체중 변화" })}
+            {pageTopBar({ back: () => { setWeightEditOpen(true); }, backLabel: "입력값 수정", tag: "체중 변화" })}
+            <div className="flex items-center gap-2 flex-wrap"><span className="chip px-3 py-2 rounded-full text-sm" style={{ background: C.bluePale, color: C.blueDeep }}>{guideInitialWeight || "—"} kg → {guideCurrentWeight || "—"} kg · {DRUG_SHORT[guideDrug]} · {guideWeeks || "—"}주차 · 당뇨 {guideDiabetes || "—"}</span><button type="button" onClick={() => setWeightEditOpen((v) => !v)} className="chip px-3 py-2 rounded-full text-sm font-medium" style={footerBtn}>수정</button></div>
+            {weightEditOpen && <div className="rounded-[22px] p-6 flex flex-col gap-5" style={{ background: C.card, border: `1px solid ${C.line}` }}>{weightFields}<p className="text-sm" style={{ color: C.ink60 }}>값을 모두 입력하면 결과가 바로 바뀌어요.</p></div>}
+            {weightResult ? <>
             <div className="rounded-[26px] p-6 md:p-8" style={{ background: C.bluePale }}>
-              <h2 className="font-display text-[26px] md:text-[30px] font-semibold leading-[1.35]" style={{ color: C.ink }}>
+              <h2 className="font-display text-[1.625rem] md:text-[1.875rem] font-semibold leading-[1.35]" style={{ color: C.ink }}>
                 {weightResult.lossRate >= 0
                   ? `당신은 ${guideWeeks || 0}주차에 체중 감량률 ${weightResult.lossRate.toFixed(1)}%를 달성하셨어요!`
                   : `당신은 ${guideWeeks || 0}주차에 체중이 ${Math.abs(weightResult.lossRate).toFixed(1)}% 늘었어요.`}
@@ -2160,7 +2021,7 @@ export default function App() {
                 </p>
               </div>
               <div>
-                <WeightTrendChart table={weightResult.table} userWeek={Number(guideWeeks)} userRate={weightResult.lossRate} />
+                <WeightTrendChart table={weightResult.table} userWeek={Number(guideWeeks)} userRate={weightResult.lossRate} fontStep={fontStep} />
                 <p className="text-xs leading-relaxed mt-3" style={{ color: C.ink60 }}>
                   <strong style={{ color: C.ink }}>{weightResult.meta.figureNo}.</strong>{" "}
                   {weightResult.meta.who}에서 {weightResult.meta.drug} 투여에 따른 주차별 평균 체중변화: {weightResult.meta.panel}
@@ -2180,27 +2041,31 @@ export default function App() {
               <p>* <RichText text={weightResult.note} /></p>
               <p>** {WEIGHT_COMMON_NOTE}</p>
             </div>
-            {guideResultFooter("다시 입력")}
+            {guideResultFooter("입력값 수정", true)}
+            </> : <div className="rounded-[22px] p-6 text-base" style={{ background: C.bluePale, color: C.blueDeep }}>값을 모두 입력하면 결과가 바로 바뀌어요.</div>}
           </div>
         )}
 
         {/* ===== 식품 선택 흐름 (1~5단계 문항 → 6단계 식품 → 결과) ===== */}
 
         {flowType === "food" && currentStep === 1 && stepCard(
-          "1단계: 식감",
+          "1단계 · 식감",
           "오늘은 어떤 씹는 느낌이 좋을까요?",
+          "지금의 입맛과 컨디션을 따라 골라주세요.",
           renderChoiceList(Q1_TEXTURE, q1Idx, setQ1Idx, avail.q1)
         )}
-
+        
         {flowType === "food" && currentStep === 2 && stepCard(
-          "2단계: 식사 형태",
+          "2단계 · 식사 형태",
           "오늘은 어떤 형태의 식사를 원하시나요?",
+          "먹기 편한 형태를 하나 골라주세요.",
           renderChoiceList(Q2_FORM, q2Idx, setQ2Idx, avail.q2)
         )}
-
+        
         {flowType === "food" && currentStep === 3 && stepCard(
-          "3단계: 냄새",
-          "오늘 특히 민감하게 느껴지는 향이 있나요? (복수 선택, 없으면 '다 괜찮아요')",
+          "3단계 · 냄새",
+          "오늘 특히 민감하게 느껴지는 향이 있나요?",
+          "여러 개 고를 수 있어요. 없으면 '다 괜찮아요'를 눌러주세요.",
           chipGroup("smellIdx", [1, 2, 3, 4, 5], smellIdx, (v) => { setSmellAllOk(false); setSmellIdx(v); }, avail.q3,
             Q3_SMELL.map((label, i) => {
               const on = smellIdx.includes(i + 1);
@@ -2213,130 +2078,117 @@ export default function App() {
             smellAllOk
           )
         )}
-
+        
         {flowType === "food" && currentStep === 4 && stepCard(
-          "4단계: 간과 풍미",
+          "4단계 · 간과 풍미",
           "오늘 식사의 간과 풍미는 어느 정도가 좋을까요?",
+          "지금 입맛에 가장 가까운 것을 골라주세요.",
           renderChoiceList(Q4_SEASONING, seasonIdx[0] || 0, (idx) => setSeasonIdx([idx]), avail.q4),
-          skipCookStep ? "식품 고르기" : "다음"
+          skipCookStep ? "식품 고르기" : "다음 단계"
         )}
-
+        
         {flowType === "food" && currentStep === 5 && !skipCookStep && stepCard(
-          "5단계: 조리 시간",
+          "5단계 · 조리 시간",
           "조리에 어느 정도 시간을 쓰실 수 있나요?",
+          "오늘 쓸 수 있는 시간을 기준으로 골라주세요.",
           renderChoiceList(Q5_COOKTIME, q5Idx, setQ5Idx, avail.q5)
         )}
 
         {/* 6단계: 식품 선택 */}
         {flowType === "food" && currentStep === 6 && (
-          <div className="flex flex-col gap-5">
-          <div className="flex items-center gap-3">
-            <button type="button" onClick={handleReset} className="chip flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full flex-shrink-0" style={{ background: C.card, color: C.ink60, border: `1px solid ${C.line}` }}>
-              <RotateCcw size={12} />처음으로
-            </button>
-            <div className="flex-1 flex items-center gap-1.5">
-              {Array.from({ length: skipCookStep ? 5 : 6 }, (_, i) => (
-                <span key={i} style={{ flex: 1, height: 4, borderRadius: 999, background: C.sageDeep }} />
-              ))}
-            </div>
-            <span className="font-mono text-xs flex-shrink-0" style={{ color: C.ink40 }}>
-              {skipCookStep ? 5 : 6}/{skipCookStep ? 5 : 6}
-            </span>
-          </div>
-
-          <div className="rounded-[26px] p-6 md:p-8 flex flex-col gap-6" style={{ background: C.card, border: `1px solid ${C.line}`, boxShadow: C.shadowSm }}>
-            <div>
-              <h2 className="font-display text-[22px] md:text-2xl font-semibold mb-2 leading-snug">{skipCookStep ? "5단계" : "6단계"}: 식품 선택</h2>
-              <p className="text-sm leading-relaxed" style={{ color: C.ink60 }}>
-                지금까지의 답변으로 남은 메뉴들에 실제로 쓰이는 식품이에요. 오늘 먹고 싶은 식품을 자유롭게 골라주세요.
-              </p>
-            </div>
-
-            <div className="rounded-2xl p-3.5 flex items-start gap-2.5 text-xs leading-relaxed" style={{ background: C.apricotPale, color: C.apricotDeep }}>
-              <Info size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-              <span>
-                한 가지 식품군만 고르면 만들 수 있는 메뉴가 적어요. <strong>식품군을 골고루 담아주세요.</strong>
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">
-                {foodSelection.length > 0 ? `${foodSelection.length}가지 선택함` : "아직 고른 식품이 없어요"}
-                <span className="text-xs ml-1" style={{ color: C.ink60 }}>/ 전체 {shownFoods.length}가지</span>
-              </p>
-              <button type="button" onClick={toggleAllFoods} className="chip px-4 py-2 rounded-full text-xs font-medium" style={chipStyle(allFoodsPicked, C.sageDeep)}>
-                {allFoodsPicked ? "전체 해제" : "전체 선택"}
-              </button>
-            </div>
-
-            <div className="flex flex-col gap-5">
-              {FOOD_GROUP_ORDER.filter((g) => (foodCandidates[g] || []).length > 0).map((group) => (
-                <div key={group}>
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-mono tracking-widest" style={{ color: C.ink40 }}>{group}</p>
-                    <button type="button" onClick={() => toggleGroupFoods(group)} className="text-xs font-medium" style={{ color: C.sageDeep }}>
-                      {isGroupPicked(group) ? "이 그룹 해제" : "이 그룹 전체 선택"}
+          <FoodStepShell
+            onReset={handleReset}
+            total={skipCookStep ? 5 : 6}
+            current={skipCookStep ? 5 : 6}
+            eyebrow={`${skipCookStep ? 5 : 6}단계 · 식품 선택`}
+            title="오늘 먹고 싶은 식품을 골라주세요"
+            desc="지금까지의 답변으로 남은 메뉴들에 실제로 쓰이는 식품이에요."
+            footer={navButtons("완료")}
+          >
+            <div className="flex flex-col gap-6">
+              <div className="rounded-2xl p-3.5 flex items-start gap-2.5 text-xs leading-relaxed" style={{ background: C.apricotPale, color: C.apricotDeep }}>
+                <Info size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+                <span>
+                  한 가지 식품군만 고르면 만들 수 있는 메뉴가 적어요. <strong>식품군을 골고루 담아주세요.</strong>
+                </span>
+              </div>
+        
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">
+                  {foodSelection.length > 0 ? `${foodSelection.length}가지 선택함` : "아직 고른 식품이 없어요"}
+                  <span className="text-xs ml-1" style={{ color: C.ink60 }}>/ 전체 {shownFoods.length}가지</span>
+                </p>
+                <button type="button" onClick={toggleAllFoods} className="chip px-4 py-2 rounded-full text-xs font-medium" style={chipStyle(allFoodsPicked, C.sageDeep)}>
+                  {allFoodsPicked ? "전체 해제" : "전체 선택"}
+                </button>
+              </div>
+        
+              <div className="flex flex-col gap-5">
+                {FOOD_GROUP_ORDER.filter((g) => (foodCandidates[g] || []).length > 0).map((group) => (
+                  <div key={group}>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-mono tracking-widest" style={{ color: C.ink40 }}>{group}</p>
+                      <button type="button" onClick={() => toggleGroupFoods(group)} className="text-xs font-medium" style={{ color: C.sageDeep }}>
+                        {isGroupPicked(group) ? "이 그룹 해제" : "이 그룹 전체 선택"}
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {foodCandidates[group].map((f) => {
+                        const active = foodSelection.includes(f.name);
+                        return (
+                          <button key={f.name} type="button" onClick={() => toggleFood(f.name)} className="chip px-3 py-2 rounded-full text-sm font-medium" style={chipStyle(active, C.sageDeep)}>
+                            <FoodLabel name={f.name} size="text-sm" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+        
+              {extraFoods.length > 0 && (
+                <div className="rounded-[20px] p-4 flex flex-col gap-3" style={{ background: C.bluePale }}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-display text-base font-semibold" style={{ color: C.blueDeep }}>이렇게도 먹어볼 수 있어요</p>
+                      <p className="text-xs mt-1 leading-relaxed" style={{ color: C.ink60 }}>
+                        위 목록에는 없지만 지금 챙기면 좋은 식품이에요. 고르시면 이 재료가 들어간 메뉴를 결과 화면 아래에 따로 보여드릴게요.
+                      </p>
+                    </div>
+                    <button type="button" onClick={toggleAllExtra} className="chip px-3 py-1.5 rounded-full text-xs font-medium flex-shrink-0" style={chipStyle(allExtraPicked, C.blueDeep)}>
+                      {allExtraPicked ? "전체 해제" : "전체 선택"}
                     </button>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {foodCandidates[group].map((f) => {
-                      const active = foodSelection.includes(f.name);
+                    {extraFoods.map((n) => {
+                      const active = extraSelection.includes(n);
                       return (
-                        <button key={f.name} type="button" onClick={() => toggleFood(f.name)} className="chip px-3 py-2 rounded-full text-sm font-medium" style={chipStyle(active, C.sageDeep)}>
-                          <FoodLabel name={f.name} size="text-sm" />
+                        <button key={n} type="button" onClick={() => toggleExtra(n)} className="chip px-3 py-2 rounded-full text-sm font-medium" style={chipStyle(active, C.blueDeep)}>
+                          <FoodLabel name={n} size="text-sm" />
                         </button>
                       );
                     })}
                   </div>
                 </div>
-              ))}
+              )}
+        
+              <VitaminLegend />
             </div>
-
-            {/* 이렇게도 먹어볼 수 있어요 */}
-            {extraFoods.length > 0 && (
-              <div className="rounded-[20px] p-4 flex flex-col gap-3" style={{ background: C.bluePale }}>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-display text-base font-semibold" style={{ color: C.blueDeep }}>이렇게도 먹어볼 수 있어요</p>
-                    <p className="text-xs mt-1 leading-relaxed" style={{ color: C.ink60 }}>
-                      위 목록에는 없지만 지금 챙기면 좋은 식품이에요. 고르시면 이 재료가 들어간 메뉴를 결과 화면 아래에 따로 보여드릴게요.
-                    </p>
-                  </div>
-                  <button type="button" onClick={toggleAllExtra} className="chip px-3 py-1.5 rounded-full text-xs font-medium flex-shrink-0" style={chipStyle(allExtraPicked, C.blueDeep)}>
-                    {allExtraPicked ? "전체 해제" : "전체 선택"}
-                  </button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {extraFoods.map((n) => {
-                    const active = extraSelection.includes(n);
-                    return (
-                      <button key={n} type="button" onClick={() => toggleExtra(n)} className="chip px-3 py-2 rounded-full text-sm font-medium" style={chipStyle(active, C.blueDeep)}>
-                        <FoodLabel name={n} size="text-sm" />
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            <VitaminLegend />
-            {navButtons("완료")}
-          </div>
-          {pageFooter()}
-          </div>
+          </FoodStepShell>
         )}
 
         {/* 결과 화면 */}
         {flowType === "food" && currentStep === 101 && (
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-8 pb-28">
             {pageTopBar({ back: handlePrev, backLabel: "식품 다시 고르기", tag: "추천 결과" })}
-            <div className="rounded-[26px] p-6 md:p-8 flex flex-col gap-2" style={{ background: C.sageDeep }}>
-              <span className="font-mono text-xs tracking-widest" style={{ color: "#A8AEE0" }}>{Q2_SHORT[q2Idx - 1]}</span>
-              <h2 className="font-display text-[26px] md:text-[30px] font-semibold leading-[1.35]" style={{ color: "#fff" }}>
+            <div className="rounded-[26px] p-6 md:p-8 flex flex-col gap-2" style={{ background: C.sageTint, border: `1px solid ${C.line}` }}>
+              <span className="font-mono text-xs tracking-widest" style={{ color: C.sageDeep }}>{Q2_SHORT[q2Idx - 1]}</span>
+              <h2 className="font-display text-[1.625rem] md:text-[1.875rem] font-semibold leading-[1.35]" style={{ color: C.ink }}>
                 {plan.kind === "table" && plan.setting ? plan.setting.label : "당신을 위한 추천 식사"}
               </h2>
-              <p className="text-sm leading-relaxed mt-2.5" style={{ color: "#C6CAEB" }}>{selectionSummary}</p>
-              <p className="text-xs leading-relaxed mt-1.5" style={{ color: "#A8AEE0" }}>이 조건으로 오늘의 메뉴를 구성했어요. 항목을 눌러 재료와 양념을 확인해보세요.</p>
+              {plan.items.filter((m) => m.kind !== "rice").slice(0, 2).length > 0 && <ul className="flex flex-col gap-2 mt-2 m-0 p-0 list-none">{plan.items.filter((m) => m.kind !== "rice").slice(0, 2).map((m) => <li key={m.id} className="rounded-2xl px-4 py-3 flex items-center justify-between gap-3" style={{ background: C.card }}><span className="font-semibold">{m.name}</span><span className="flex gap-1">{itemVitamins(m, foodSelection).map((k) => <VitaminMark key={k} nutrient={k} size={14} />)}</span></li>)}</ul>}
+              <details className="mt-2"><summary className="text-sm cursor-pointer" style={{ color: C.ink60 }}>내가 고른 조건 보기</summary><p className="text-sm leading-relaxed mt-2" style={{ color: C.ink60 }}>{selectionSummary}</p></details>
+              <p className="text-sm leading-relaxed mt-1.5" style={{ color: C.ink60 }}>이 조건으로 오늘의 메뉴를 구성했어요. 항목을 눌러 재료와 양념을 확인해보세요.</p>
             </div>
 
             <div className="rounded-[22px] px-5 py-4" style={{ background: C.card, border: `1px solid ${C.line}` }}>
@@ -2424,7 +2276,7 @@ export default function App() {
               {morePool.length > 0 && (
                 <>
                   <button type="button" onClick={drawMoreMenus} className="chip w-full mt-4 py-3 rounded-full text-sm font-medium" style={{ background: C.sageTint, color: C.sageDeep }}>더 볼래!</button>
-                  <p className="text-[11px] mt-2.5 text-center" style={{ color: C.ink40 }}>
+                  <p className="text-xs mt-2.5 text-center" style={{ color: C.ink40 }}>
                     만들 수 있는 다른 메뉴 {moreTotal}가지 중 {moreMenus.length}가지를 보고 있어요
                     {moreFitCount > 0 ? ` · 오늘 조건에 딱 맞는 메뉴 ${moreFitCount}가지` : ""}
                   </p>
@@ -2439,10 +2291,15 @@ export default function App() {
               <p>이 추천은 당신의 선호도를 기반으로 하며, 개인의 건강 상태에 따라 조정이 필요할 수 있어요. 특별한 건강 관련 우려사항이 있으시면 전문가와 상담하세요.</p>
             </div>
 
-            {pageFooter({ back: handlePrev, backLabel: "식품 다시 고르기" })}
           </div>
         )}
-      </div>
+
+        {flowType === "food" && currentStep === 101 && (
+          <div className="fixed inset-x-0 bottom-0 z-40" style={{ background: "rgba(244,245,250,0.94)", backdropFilter: "blur(8px)", borderTop: `1px solid ${C.line}`, paddingBottom: "env(safe-area-inset-bottom)" }}>
+            <div className="max-w-2xl md:max-w-3xl mx-auto px-5 py-3 flex gap-2"><button type="button" onClick={handlePrev} className={`${bottomChip} flex-1 justify-center`} style={footerBtn}><ChevronLeft size={14} />식품 다시 고르기</button><button type="button" onClick={handleReset} className={`${bottomChip} flex-1 justify-center`} style={footerBtn}><RotateCcw size={14} />처음부터</button><button type="button" aria-label="맨 위로" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="chip rounded-full w-11 flex items-center justify-center" style={footerBtn}><ChevronUp size={18} /></button></div>
+          </div>
+        )}
+      </div>}
     </div>
   );
 }
