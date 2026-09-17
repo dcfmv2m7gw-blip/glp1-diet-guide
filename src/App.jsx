@@ -40,8 +40,8 @@ const GUIDE_DATA = {
     question: "다음 중 자신에게 해당하는 투약 단계를 선택해주세요",
     options: [
       { id: "stage1", label: "Stage 1: 약물 증량기", description: "현재 GLP-1 비만치료제를 투여 중이며, 시작 용량 또는 증량 과정에 있음" },
-      { id: "stage2", label: "Stage 2: 약물 용량 유지기", description: "현재 GLP-1 비만치료제를 투여 중이며, 의료진이 권장하는 목표 유지 용량에 도달함" },
-      { id: "stage3", label: "Stage 3: 투여 중단 및 완료기", description: "GLP-1 비만치료제 사용 중 부작용·불편감으로 잠시 투여를 중단했거나, 목표 체중을 달성하여 투여를 완전히 마침" },
+      { id: "stage2", label: "Stage 2: 약물 용량 유지기", description: "현재 GLP-1 비만치료제를 투여 중이며, 의료진이 처방한 목표 유지 용량에 도달함" },
+      { id: "stage3", label: "Stage 3: 투여 중단 및 완료기", description: "GLP-1 비만치료제 사용 중 부작용·불편감으로 잠시 투여를 중단했거나 목표 체중에 도달하여 투여를 완전히 마침" },
     ],
     recommendations: {
       stage1: {
@@ -1544,6 +1544,11 @@ export default function App() {
     setExtraSelection((prev) => (prev.every((n) => ok.has(n)) ? prev : prev.filter((n) => ok.has(n))));
   }, [extraFoods]);
 
+  // 화면이 바뀌면 긴 페이지도 항상 처음부터 보여준다.
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [flowType, currentStep, guideCategory, guideAnswer]);
+
   const sauceFor = (item) => displaySauces(item.sauceIds, smellIdx, seasonIdx);
 
   // 결과 화면 상단에 띄울 "내가 고른 조건" 한 문장
@@ -1733,15 +1738,41 @@ export default function App() {
 
   const footerBtn = { background: C.card, color: C.ink60, border: `1px solid ${C.line}` };
 
-  const guideResultFooter = (retryLabel = "다시 선택") => (
+  // 모든 페이지에서 같은 위치·문구·아이콘을 쓰는 공통 이동 버튼.
+  const topChip = "chip flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full";
+  const bottomChip = "chip flex items-center gap-2 text-sm font-medium px-5 py-2.5 rounded-full";
+
+  const pageTopBar = ({ back, backLabel, tag } = {}) => (
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2">
+        {back && (
+          <button type="button" onClick={back} className={topChip} style={footerBtn}>
+            <ChevronLeft size={13} />{backLabel}
+          </button>
+        )}
+        <button type="button" onClick={handleReset} className={topChip} style={footerBtn}>
+          <RotateCcw size={12} />처음으로
+        </button>
+      </div>
+      {tag && <span className="font-mono text-xs" style={{ color: C.ink40 }}>{tag}</span>}
+    </div>
+  );
+
+  const pageFooter = ({ back, backLabel } = {}) => (
     <div className="flex gap-2.5 justify-center pt-2">
-      <button type="button" onClick={() => setGuideAnswer(null)} className="chip flex items-center gap-2 text-sm font-medium px-5 py-2.5 rounded-full" style={footerBtn}>
-        <ChevronLeft size={14} />{retryLabel}
-      </button>
-      <button type="button" onClick={handleReset} className="chip flex items-center gap-2 text-sm font-medium px-5 py-2.5 rounded-full" style={footerBtn}>
+      {back && (
+        <button type="button" onClick={back} className={bottomChip} style={footerBtn}>
+          <ChevronLeft size={14} />{backLabel}
+        </button>
+      )}
+      <button type="button" onClick={handleReset} className={bottomChip} style={footerBtn}>
         <RotateCcw size={14} />처음으로
       </button>
     </div>
+  );
+
+  const guideResultFooter = (retryLabel = "다시 선택") => (
+    pageFooter({ back: () => setGuideAnswer(null), backLabel: retryLabel })
   );
 
   // 복수선택 문항의 전체 선택. 고르면 결과가 사라지는 항목은 애초에 화면에 없으므로,
@@ -1867,7 +1898,7 @@ export default function App() {
       <div className="flex flex-col gap-5">
         <div className="flex items-center gap-3">
           <button type="button" onClick={handleReset} className="chip flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full flex-shrink-0" style={{ background: C.card, color: C.ink60, border: `1px solid ${C.line}` }}>
-            <ChevronLeft size={13} />처음으로
+            <RotateCcw size={12} />처음으로
           </button>
           <div className="flex-1 flex items-center gap-1.5">
             {Array.from({ length: total }, (_, i) => (
@@ -1894,6 +1925,7 @@ export default function App() {
           {body}
           {navButtons(nextLabel)}
         </div>
+        {pageFooter()}
       </div>
     );
   };
@@ -1925,7 +1957,7 @@ export default function App() {
                 다시, 채움
               </h1>
               <p className="mt-4 max-w-md text-sm md:text-base leading-relaxed" style={{ color: C.ink60 }}>
-                GLP-1 계열 비만치료제 투여자를 위한 맞춤 권고와 오늘의 식사 선택 플랫폼이에요. 먼저 권고사항을 확인한 뒤, 오늘의 식사를 선택해 보세요!
+                GLP-1 계열 비만치료제 투여자를 위한 맞춤 권고와 오늘의 식사 선택 플랫폼이에요. 먼저 권고사항을 확인한 뒤, 식품 선택 페이지에서 오늘의 식사를 선택해 보세요!
               </p>
             </div>
 
@@ -1978,7 +2010,7 @@ export default function App() {
         {/* ===== 권고사항 흐름 ===== */}
         {flowType === "guide" && !guideCategory && (
           <div className="flex flex-col gap-6">
-            <button type="button" onClick={handleReset} className="chip self-start flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full" style={{ background: C.card, color: C.ink60, border: `1px solid ${C.line}` }}><ChevronLeft size={13} /> 처음으로</button>
+            {pageTopBar({ tag: "권고사항" })}
             <PageHead eyebrow="GUIDE" title="권고사항" desc="확인하고 싶은 항목을 선택해주세요." />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {GUIDE_MENU.map((category) => {
@@ -1994,29 +2026,21 @@ export default function App() {
                 );
               })}
             </div>
+            {pageFooter()}
           </div>
         )}
 
         {flowType === "guide" && guideCategory === "general" && (
           <div className="flex flex-col gap-6">
-            <div className="flex items-center justify-between">
-              <button type="button" onClick={returnToGuideHome} className="chip flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full" style={{ background: C.card, color: C.ink60, border: `1px solid ${C.line}` }}><ChevronLeft size={13} /> 권고사항 홈</button>
-              <span className="font-mono text-xs" style={{ color: C.ink40 }}>공통 권고</span>
-            </div>
+            {pageTopBar({ back: returnToGuideHome, backLabel: "권고사항 홈", tag: "공통 권고" })}
             <GeneralGuideView />
-            <div className="flex gap-2.5 justify-center pt-2">
-              <button type="button" onClick={returnToGuideHome} className="chip flex items-center gap-2 text-sm font-medium px-5 py-2.5 rounded-full" style={footerBtn}><ChevronLeft size={14} />권고사항 홈</button>
-              <button type="button" onClick={handleReset} className="chip flex items-center gap-2 text-sm font-medium px-5 py-2.5 rounded-full" style={footerBtn}><RotateCcw size={14} />처음으로</button>
-            </div>
+            {pageFooter({ back: returnToGuideHome, backLabel: "권고사항 홈" })}
           </div>
         )}
 
         {flowType === "guide" && guideCategory && guideCategory !== "weight" && guideCategory !== "general" && !guideAnswer && (
           <div className="flex flex-col gap-6">
-            <div className="flex items-center justify-between">
-              <button type="button" onClick={returnToGuideHome} className="chip flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full" style={{ background: C.card, color: C.ink60, border: `1px solid ${C.line}` }}><ChevronLeft size={13} /> 권고사항 홈</button>
-              <span className="font-mono text-xs" style={{ color: C.ink40 }}>맞춤 권고</span>
-            </div>
+            {pageTopBar({ back: returnToGuideHome, backLabel: "권고사항 홈", tag: "맞춤 권고" })}
             <PageHead eyebrow={GUIDE_DATA[guideCategory].title} title={GUIDE_DATA[guideCategory].question} />
             {GUIDE_DATA[guideCategory].note && (
               <div className="rounded-2xl p-4 flex items-start gap-2.5 text-xs leading-relaxed" style={{ background: C.sageTint, color: C.ink60 }}>
@@ -2035,6 +2059,7 @@ export default function App() {
                 </button>
               ))}
             </div>
+            {pageFooter({ back: returnToGuideHome, backLabel: "권고사항 홈" })}
           </div>
         )}
 
@@ -2047,6 +2072,7 @@ export default function App() {
           const heading = (!Array.isArray(recommendation) && recommendation.title) || selected.label;
           return (
             <div className="flex flex-col gap-6">
+              {pageTopBar({ back: () => setGuideAnswer(null), backLabel: "다시 선택", tag: guide.title })}
               <PageHead eyebrow="RECOMMENDATION" title={heading} />
               {goal && (
                 <div className="rounded-[22px] p-6 md:p-7" style={{ background: C.sageTint }}>
@@ -2067,10 +2093,7 @@ export default function App() {
 
         {flowType === "guide" && guideCategory === "weight" && !guideAnswer && (
           <div className="flex flex-col gap-6">
-            <div className="flex items-center justify-between">
-              <button type="button" onClick={handleReset} className="chip flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full" style={{ background: C.card, color: C.ink60, border: `1px solid ${C.line}` }}><ChevronLeft size={13} /> 처음으로</button>
-              <span className="font-mono text-xs" style={{ color: C.ink40 }}>체중 변화</span>
-            </div>
+            {pageTopBar({ tag: "체중 변화" })}
             <PageHead eyebrow="WEIGHT" title="투여 전후 체중과 투여 정보를 입력해주세요" tone="blue" />
             <div className="rounded-[26px] p-6 md:p-8 flex flex-col gap-5" style={{ background: C.card, border: `1px solid ${C.line}`, boxShadow: C.shadowSm }}>
               <div>
@@ -2105,11 +2128,13 @@ export default function App() {
                 결과 보기<ChevronRight size={16} className="inline ml-1" />
               </button>
             </div>
+            {pageFooter()}
           </div>
         )}
 
         {flowType === "guide" && guideCategory === "weight" && guideAnswer && weightResult && (
           <div className="flex flex-col gap-6">
+            {pageTopBar({ back: () => setGuideAnswer(null), backLabel: "다시 입력", tag: "체중 변화" })}
             <div className="rounded-[26px] p-6 md:p-8" style={{ background: C.bluePale }}>
               <h2 className="font-display text-[26px] md:text-[30px] font-semibold leading-[1.35]" style={{ color: C.ink }}>
                 {weightResult.lossRate >= 0
@@ -2207,7 +2232,7 @@ export default function App() {
           <div className="flex flex-col gap-5">
           <div className="flex items-center gap-3">
             <button type="button" onClick={handleReset} className="chip flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full flex-shrink-0" style={{ background: C.card, color: C.ink60, border: `1px solid ${C.line}` }}>
-              <ChevronLeft size={13} />처음으로
+              <RotateCcw size={12} />처음으로
             </button>
             <div className="flex-1 flex items-center gap-1.5">
               {Array.from({ length: skipCookStep ? 5 : 6 }, (_, i) => (
@@ -2297,12 +2322,14 @@ export default function App() {
             <VitaminLegend />
             {navButtons("완료")}
           </div>
+          {pageFooter()}
           </div>
         )}
 
         {/* 결과 화면 */}
         {flowType === "food" && currentStep === 101 && (
           <div className="flex flex-col gap-8">
+            {pageTopBar({ back: handlePrev, backLabel: "식품 다시 고르기", tag: "추천 결과" })}
             <div className="rounded-[26px] p-6 md:p-8 flex flex-col gap-2" style={{ background: C.sageDeep }}>
               <span className="font-mono text-xs tracking-widest" style={{ color: "#A8AEE0" }}>{Q2_SHORT[q2Idx - 1]}</span>
               <h2 className="font-display text-[26px] md:text-[30px] font-semibold leading-[1.35]" style={{ color: "#fff" }}>
@@ -2412,14 +2439,7 @@ export default function App() {
               <p>이 추천은 당신의 선호도를 기반으로 하며, 개인의 건강 상태에 따라 조정이 필요할 수 있어요. 특별한 건강 관련 우려사항이 있으시면 전문가와 상담하세요.</p>
             </div>
 
-            <div className="flex gap-3 justify-center">
-              <button onClick={handlePrev} className="chip flex items-center gap-2 text-sm font-medium px-5 py-2.5 rounded-full" style={footerBtn}>
-                <ChevronLeft size={14} />식품 다시 고르기
-              </button>
-              <button onClick={handleReset} className="chip flex items-center gap-2 text-sm font-medium px-5 py-2.5 rounded-full" style={footerBtn}>
-                <RotateCcw size={14} />처음부터
-              </button>
-            </div>
+            {pageFooter({ back: handlePrev, backLabel: "식품 다시 고르기" })}
           </div>
         )}
       </div>
