@@ -1761,44 +1761,42 @@ export default function App() {
   );
 
 
-  // 복수선택 문항의 전체 선택. 고르면 결과가 사라지는 항목은 애초에 화면에 없으므로,
-  // 남아 있는(=고를 수 있는) 항목만 순서대로 담는다.
-  const selectAllChips = (key, values, current, setter, allowed) => {
-    const visibleValues = values.filter((v) => !allowed || allowed.has(v) || current.includes(v));
-    if (visibleValues.length === 0) return null;
-    const pickedAll = visibleValues.every((v) => current.includes(v));
-    return (
-      <button
-        type="button"
-        onClick={() => {
-          if (pickedAll) { setter([]); return; }
-          const next = [...current];
-          visibleValues.forEach((v) => {
-            if (next.includes(v)) return;
-            if (multiOptionEnabled({ ...answers, [key]: next }, key, v)) next.push(v);
-          });
-          setter(next);
-        }}
-        className="chip px-4 py-2 rounded-full text-xs font-medium"
-        style={chipStyle(pickedAll, C.sageDeep)}
-      >
-        {pickedAll ? "전체 해제" : "전체 선택"}
-      </button>
-    );
-  };
+  // 냄새 문항은 복수 선택이지만, 다른 단계와 같은 선택 행 UI를 쓴다.
+  // 선택 가능 항목·전체 선택·"다 괜찮아요"의 기존 동작은 그대로 유지한다.
+  const renderSmellChoiceList = () => {
+    const values = [1, 2, 3, 4, 5];
+    const visibleValues = values.filter((v) => avail.q3.has(v) || smellIdx.includes(v));
+    const pickedAll = visibleValues.length > 0 && visibleValues.every((v) => smellIdx.includes(v));
+    const selectAll = () => {
+      setSmellAllOk(false);
+      if (pickedAll) { setSmellIdx([]); return; }
+      const next = [...smellIdx];
+      visibleValues.forEach((v) => {
+        if (!next.includes(v) && multiOptionEnabled({ ...answers, smellIdx: next }, "smellIdx", v)) next.push(v);
+      });
+      setSmellIdx(next);
+    };
 
-  const chipGroup = (key, values, current, setter, allowed, chips, allOk) => {
-    const visibleValues = values.filter((v) => !allowed || allowed.has(v) || current.includes(v));
-    const visibleChips = visibleValues.map((v) => chips[v - 1]);
-    const specialChip = chips.length > values.length ? chips[values.length] : null;
-    if (specialChip) visibleChips.push(specialChip);
     return (
       <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-medium">{current.length > 0 ? `${current.length}개 선택함` : allOk ? "다 괜찮다고 답하셨어요" : "아직 고른 항목이 없어요"}</p>
-          {selectAllChips(key, values, current, setter, allowed)}
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-medium">
+            {smellIdx.length > 0 ? `${smellIdx.length}개 선택함` : smellAllOk ? "다 괜찮다고 답하셨어요" : "아직 고른 항목이 없어요"}
+          </p>
+          <button type="button" onClick={selectAll} className="chip px-4 py-2 rounded-full text-xs font-medium flex-shrink-0" style={chipStyle(pickedAll, C.sageDeep)}>
+            {pickedAll ? "전체 해제" : "전체 선택"}
+          </button>
         </div>
-        <div className="flex flex-wrap gap-2">{visibleChips}</div>
+        <div className="flex flex-col gap-3">
+          {visibleValues.map((idx) => (
+            <ChoiceRow key={Q3_SMELL[idx - 1]} label={Q3_SMELL[idx - 1]} active={smellIdx.includes(idx)} onClick={() => toggleSmell(idx)} />
+          ))}
+          <ChoiceRow
+            label="다 괜찮아요"
+            active={smellAllOk}
+            onClick={() => { setSmellIdx([]); setSmellAllOk(true); }}
+          />
+        </div>
       </div>
     );
   };
@@ -2077,17 +2075,7 @@ export default function App() {
           "3단계 · 냄새",
           "오늘 특히 민감하게 느껴지는 향이 있나요?",
           "여러 개 고를 수 있어요. 없으면 '다 괜찮아요'를 눌러주세요.",
-          chipGroup("smellIdx", [1, 2, 3, 4, 5], smellIdx, (v) => { setSmellAllOk(false); setSmellIdx(v); }, avail.q3,
-            Q3_SMELL.map((label, i) => {
-              const on = smellIdx.includes(i + 1);
-              return (
-                <button key={label} type="button" onClick={() => toggleSmell(i + 1)} className="chip px-3 py-2 rounded-full text-xs font-medium" style={chipStyle(on, C.sage)}>{label}</button>
-              );
-            }).concat(
-              <button key="smell-all-ok" type="button" onClick={() => { setSmellIdx([]); setSmellAllOk(true); }} className="chip px-3 py-2 rounded-full text-xs font-medium" style={chipStyle(smellAllOk, C.sage)}>다 괜찮아요</button>
-            ),
-            smellAllOk
-          )
+          renderSmellChoiceList()
         )}
         
         {flowType === "food" && currentStep === 4 && stepCard(
