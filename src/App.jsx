@@ -1916,7 +1916,6 @@ export default function App() {
               onGuide={openGuideHome}
               onFood={() => { setFlowType("food"); setCurrentStep(1); }}
               onWeight={openWeight}
-              onTip={() => openGuide("general")}
             />
           </div>
         )}

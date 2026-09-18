@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, ArrowRight, Check, Info } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Info } from "lucide-react";
 import { C, TONE } from "./theme.js";
 import brandLogo from "./dasi-chaum-logo.png";
 import brandIcon from "./dasi-chaum-icon.png";
@@ -193,7 +193,7 @@ function EntryCard({ icon, title, desc, onClick, badge }) {
   );
 }
 
-export function HomeScreen({ onGuide, onFood, onWeight, onTip }) {
+export function HomeScreen({ onGuide, onFood, onWeight }) {
   return (
     <div className="flex flex-col gap-4">
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap');`}</style>
@@ -225,16 +225,6 @@ export function HomeScreen({ onGuide, onFood, onWeight, onTip }) {
       <EntryCard badge="처음이라면 여기부터" icon={<IconGuide />} title="권고사항" desc="내 상태에 맞는 식사 가이드" onClick={onGuide} />
       <EntryCard icon={<IconFood />} title="식품 선택" desc="오늘 먹고 싶은 재료로 메뉴 찾기" onClick={onFood} />
       <EntryCard icon={<IconWeight />} title="체중 변화" desc="나의 감량 경과 확인" onClick={onWeight} />
-
-      <button type="button" onClick={onTip} className="w-full text-left rounded-[22px] px-4 py-4 sm:px-6 flex items-center gap-4" style={{ background: P.pale }}>
-        <IconCircle size={60} bg="rgba(255,255,255,0.7)"><IconSprout size={36} /></IconCircle>
-        <span className="self-stretch w-px" style={{ background: "#C9CDEB" }} />
-        <span className="flex-1 min-w-0 leading-relaxed">
-          <span className="block text-base font-medium" style={{ color: P.navyInk }}>작은 실천이<br className="sm:hidden" /> 큰 변화를 만듭니다.</span>
-          <span className="block text-sm mt-0.5" style={{ color: P.ink60 }}>다시, 채움이 함께할게요.</span>
-        </span>
-        <ArrowRight size={24} style={{ color: P.navy, flexShrink: 0 }} />
-      </button>
     </div>
   );
 }
@@ -282,13 +272,6 @@ export function GuideHomeScreen({ onBack, onOpen, headerRight }) {
           </button>
         ))}
       </div>
-
-      <button type="button" onClick={() => onOpen("sideEffects")} className="w-full text-left rounded-[20px] px-4 py-4 sm:px-6 flex items-center gap-4" style={{ background: "#FDE8EB" }}>
-        <span className="flex items-center justify-center rounded-full flex-shrink-0 text-white text-xl font-bold" style={{ width: 42, height: 42, background: P.coral }}>!</span>
-        <span className="self-stretch w-px" style={{ background: "#F2C3CA" }} />
-        <span className="flex-1 font-semibold text-base" style={{ color: "#D23B3B" }}>심한 증상은 의료진과 상담하세요</span>
-        <ChevronRight size={24} style={{ color: "#D23B3B", flexShrink: 0 }} />
-      </button>
     </div>
   );
 }
@@ -471,4 +454,3 @@ export function GuidePoint({ point }) {
     </li>
   );
 }
-
