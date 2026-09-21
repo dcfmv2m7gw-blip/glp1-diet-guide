@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Check, Info } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Info, AlertCircle } from "lucide-react";
 import { C, TONE } from "./theme.js";
 import brandLogo from "./dasi-chaum-logo.png";
 import brandIcon from "./dasi-chaum-icon.png";
@@ -18,6 +18,10 @@ const P = {
   tint: "#EDEFF9",
   line: "#E1E4F3",
   coral: "#FF7B63",
+  apricot: "#FF8A5B",
+  apricotDeep: "#BE4D26",
+  apricotPale: "#FFF1EA",
+  apricotLine: "#F0B39C",
   green: "#3E7A55",
   leaf: "#DCEBDF",
 };
@@ -279,35 +283,62 @@ export function GuideHomeScreen({ onBack, onOpen, headerRight }) {
 // ══════════════════════════════════════════════════════════════════
 // 체중 변화 입력
 // ══════════════════════════════════════════════════════════════════
-export function Field({ label, children }) {
+export function Field({ label, required = false, error, children }) {
   return (
     <div>
-      <p className="text-base font-bold mb-2.5" style={{ color: P.navyInk }}>{label}</p>
+      <p className="text-base font-bold mb-2.5" style={{ color: P.navyInk }}>
+        {label}{required && <span className="ml-1" style={{ color: P.apricotDeep }}>*</span>}
+      </p>
       {children}
+      {error && (
+        <p className="mt-2 flex items-center gap-1.5 text-sm font-medium" style={{ color: P.apricotDeep }}>
+          <AlertCircle size={16} aria-hidden="true" />
+          {error}
+        </p>
+      )}
     </div>
   );
 }
 
-export function UnitInput({ value, onChange, placeholder, unit }) {
+export function UnitInput({ value, onChange, placeholder, unit, invalid = false }) {
   return (
-    <label className="unit-input flex items-center rounded-2xl px-5" style={{ background: "#fff", border: `1.5px solid ${P.line}`, transition: "border-color .15s, box-shadow .15s" }}>
+    <label
+      className="unit-input flex items-center rounded-2xl px-5"
+      style={{
+        background: invalid ? "#FFFCFA" : "#fff",
+        border: `1.5px solid ${invalid ? P.apricot : P.line}`,
+        boxShadow: invalid ? `0 0 0 3px ${P.apricotPale}` : "none",
+        transition: "border-color .15s, box-shadow .15s",
+      }}
+    >
       <input
         type="number"
         inputMode="decimal"
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
+        aria-invalid={invalid || undefined}
         className="flex-1 min-w-0 bg-transparent py-4 text-xl font-semibold"
         style={{ color: P.navyInk, border: "none", outline: "none", boxShadow: "none" }}
       />
+      {invalid && <AlertCircle size={20} style={{ color: P.apricotDeep, marginRight: 10 }} aria-hidden="true" />}
       <span className="text-lg" style={{ color: P.ink40 }}>{unit}</span>
     </label>
   );
 }
 
-export function Segmented({ options, value, onChange }) {
+export function Segmented({ options, value, onChange, invalid = false }) {
   return (
-    <div role="radiogroup" className="grid rounded-2xl p-1" style={{ gridTemplateColumns: `repeat(${options.length}, 1fr)`, background: P.tint }}>
+    <div
+      role="radiogroup"
+      className="grid rounded-2xl p-1"
+      style={{
+        gridTemplateColumns: `repeat(${options.length}, 1fr)`,
+        background: invalid ? "#FFFCFA" : P.tint,
+        border: `1.5px solid ${invalid ? P.apricot : "transparent"}`,
+        boxShadow: invalid ? `0 0 0 3px ${P.apricotPale}` : "none",
+      }}
+    >
       {options.map((o) => {
         const on = o.value === value;
         return (
@@ -316,6 +347,7 @@ export function Segmented({ options, value, onChange }) {
             type="button"
             role="radio"
             aria-checked={on}
+            aria-invalid={invalid || undefined}
             onClick={() => onChange(o.value)}
             className="chip py-3 rounded-xl text-base font-semibold"
             style={{ background: on ? "#6F7AE6" : "transparent", color: on ? "#fff" : P.navyInk, boxShadow: on ? "0 6px 14px -8px rgba(80,90,210,.7)" : "none" }}
@@ -328,7 +360,30 @@ export function Segmented({ options, value, onChange }) {
   );
 }
 
-export function WeightInputScreen({ onBack, headerRight, children, canSubmit, onSubmit }) {
+function ValidationBanner() {
+  return (
+    <div
+      role="alert"
+      className="rounded-2xl px-5 py-4 flex items-start gap-3"
+      style={{ background: P.apricotPale, border: `1px solid ${P.apricotLine}` }}
+    >
+      <span
+        className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+        style={{ background: "#F8D8CB", color: P.apricotDeep }}
+      >
+        <AlertCircle size={21} aria-hidden="true" />
+      </span>
+      <div>
+        <p className="font-bold" style={{ color: P.apricotDeep }}>입력하지 않은 항목이 있어요</p>
+        <p className="mt-0.5 text-sm leading-relaxed" style={{ color: P.ink60 }}>
+          강조된 항목을 입력하거나 선택해 주세요.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export function WeightInputScreen({ onBack, headerRight, children, hasValidationErrors, onSubmit }) {
   return (
     <div className="flex flex-col gap-4">
       <style>{`.unit-input:focus-within { border-color: ${P.sage} !important; box-shadow: 0 0 0 3px ${P.pale}; }`}</style>
@@ -337,16 +392,18 @@ export function WeightInputScreen({ onBack, headerRight, children, canSubmit, on
       <section className="rounded-[26px] px-6 py-6 sm:px-8 flex items-center justify-between gap-1" style={{ background: P.pale }}>
         <div className="min-w-0 flex-1">
           <h2 className="font-display text-[1.625rem] sm:text-[2.125rem] font-bold leading-[1.3]" style={{ color: P.navyInk }}>
-            나의 변화를<br />차분히 확인해요
+            투약 정보 입력
           </h2>
           <p className="mt-3 text-[0.95rem] sm:text-lg leading-relaxed" style={{ color: P.ink60 }}>
-            작은 변화도, 더 건강한<br />내일로 이어질 수 있어요.
+            입력한 내용을 바탕으로<br />감량 경과를 확인해요.
           </p>
         </div>
         <span className="flex-shrink-0 w-[124px] h-[124px] sm:w-[180px] sm:h-[180px] rounded-full flex items-center justify-center" style={{ background: "#D8DBF6" }} aria-hidden="true">
           <HeroScale size="92%" />
         </span>
       </section>
+
+      {hasValidationErrors && <ValidationBanner />}
 
       <div className="rounded-[26px] p-5 sm:p-7 flex flex-col gap-6" style={{ background: "#fff", border: `1px solid ${P.line}` }}>
         {children}
@@ -356,7 +413,7 @@ export function WeightInputScreen({ onBack, headerRight, children, canSubmit, on
         </div>
       </div>
 
-      <button type="button" onClick={onSubmit} disabled={!canSubmit} className="chip w-full py-4 rounded-full text-lg font-semibold text-white disabled:opacity-40" style={{ background: "#4A52B0" }}>
+      <button type="button" onClick={onSubmit} className="chip w-full py-4 rounded-full text-lg font-semibold text-white" style={{ background: "#4A52B0" }}>
         감량 경과 보기
       </button>
     </div>

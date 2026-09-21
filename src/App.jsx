@@ -1412,6 +1412,7 @@ export default function App() {
   const [guideDrug, setGuideDrug] = useState("wegovy");
   const [guideWeeks, setGuideWeeks] = useState("");
   const [guideDiabetes, setGuideDiabetes] = useState("");
+  const [weightSubmitAttempted, setWeightSubmitAttempted] = useState(false);
   const [weightEditOpen, setWeightEditOpen] = useState(false);
 
   // 식품 선택 흐름 — 값은 선택지 번호(1부터). 0 또는 빈 배열 = 미선택
@@ -1456,6 +1457,20 @@ export default function App() {
     }));
     return { lossRate, closestWeek, averages, note: WEIGHT_STUDY_NOTES[guideDrug][key], table, meta: WEIGHT_FIGURE_META[guideDrug][key] };
   }, [guideInitialWeight, guideCurrentWeight, guideDrug, guideWeeks, guideDiabetes]);
+
+  const weightErrors = {
+    initialWeight: !Number(guideInitialWeight) ? "투여 직전 또는 초기 체중을 입력해 주세요." : "",
+    currentWeight: !Number(guideCurrentWeight) ? "현재 체중을 입력해 주세요." : "",
+    weeks: !Number(guideWeeks) ? "현재까지 투여 기간을 입력해 주세요." : "",
+    diabetes: !guideDiabetes ? "제2형 당뇨병 여부를 선택해 주세요." : "",
+  };
+
+  const hasWeightErrors = Object.values(weightErrors).some(Boolean);
+
+  const handleWeightSubmit = () => {
+    setWeightSubmitAttempted(true);
+    if (!hasWeightErrors) setGuideAnswer("computed");
+  };
 
   const avail = useMemo(() => optionAvailability(answers), [answers]);
   const foodCandidates = useMemo(() => buildFoodCandidates(answers), [answers]);
@@ -1673,6 +1688,7 @@ export default function App() {
     setGuideCategory(null);
     setGuideAnswer(null);
     setGuideInitialWeight(""); setGuideCurrentWeight(""); setGuideDrug("wegovy"); setGuideWeeks(""); setGuideDiabetes("");
+    setWeightSubmitAttempted(false);
     setQ1Idx(0); setQ2Idx(0); setSmellIdx([]); setSmellAllOk(false); setSeasonIdx([]); setQ5Idx(0);
     setFoodSelection([]); setExtraSelection([]);
     setExpandedMenus({});
@@ -1682,7 +1698,7 @@ export default function App() {
 
   const openGuide = (category) => { setFlowType("guide"); setGuideCategory(category); setGuideAnswer(null); };
   const openGuideHome = () => { setFlowType("guide"); setGuideCategory(null); setGuideAnswer(null); };
-  const openWeight = () => { setFlowType("guide"); setGuideCategory("weight"); setGuideAnswer(null); };
+  const openWeight = () => { setFlowType("guide"); setGuideCategory("weight"); setGuideAnswer(null); setWeightSubmitAttempted(false); };
   const returnToGuideHome = () => { setFlowType("guide"); setGuideCategory(null); setGuideAnswer(null); };
 
   // 고른 것 = 색을 채운 면, 안 고른 것 = 흰 바탕에 얇은 테두리.
@@ -1734,27 +1750,28 @@ export default function App() {
 
   const weightFields = (
     <>
-      <Field label="투여 시작 체중">
-        <UnitInput value={guideInitialWeight} onChange={setGuideInitialWeight} placeholder="70" unit="kg" />
+      <Field label="투여 직전 또는 초기 체중 (kg)" required error={weightSubmitAttempted ? weightErrors.initialWeight : ""}>
+        <UnitInput value={guideInitialWeight} onChange={setGuideInitialWeight} placeholder="예: 70" unit="kg" invalid={weightSubmitAttempted && !!weightErrors.initialWeight} />
       </Field>
-      <Field label="현재 체중">
-        <UnitInput value={guideCurrentWeight} onChange={setGuideCurrentWeight} placeholder="65" unit="kg" />
+      <Field label="현재 체중 (kg)" required error={weightSubmitAttempted ? weightErrors.currentWeight : ""}>
+        <UnitInput value={guideCurrentWeight} onChange={setGuideCurrentWeight} placeholder="예: 65" unit="kg" invalid={weightSubmitAttempted && !!weightErrors.currentWeight} />
       </Field>
-      <Field label="투여 약물">
+      <Field label="투여 약물" required>
         <Segmented
           options={[{ value: "wegovy", label: "위고비" }, { value: "mounjaro", label: "마운자로" }]}
           value={guideDrug}
           onChange={setGuideDrug}
         />
       </Field>
-      <Field label="투여 기간">
-        <UnitInput value={guideWeeks} onChange={setGuideWeeks} placeholder="12" unit="주" />
+      <Field label="현재까지 투여받은 기간 (주차)" required error={weightSubmitAttempted ? weightErrors.weeks : ""}>
+        <UnitInput value={guideWeeks} onChange={setGuideWeeks} placeholder="예: 12" unit="주" invalid={weightSubmitAttempted && !!weightErrors.weeks} />
       </Field>
-      <Field label="제2형 당뇨병 여부">
+      <Field label="제2형 당뇨병 여부" required error={weightSubmitAttempted ? weightErrors.diabetes : ""}>
         <Segmented
           options={[{ value: "예", label: "예" }, { value: "아니요", label: "아니요" }]}
           value={guideDiabetes}
           onChange={setGuideDiabetes}
+          invalid={weightSubmitAttempted && !!weightErrors.diabetes}
         />
       </Field>
     </>
@@ -1991,8 +2008,8 @@ export default function App() {
         {flowType === "guide" && guideCategory === "weight" && !guideAnswer && (
           <WeightInputScreen
             onBack={handleReset}
-            canSubmit={!!weightResult}
-            onSubmit={() => weightResult && setGuideAnswer("computed")}
+            hasValidationErrors={weightSubmitAttempted && hasWeightErrors}
+            onSubmit={handleWeightSubmit}
           >
             {weightFields}
           </WeightInputScreen>
