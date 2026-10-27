@@ -1904,27 +1904,30 @@ export default function App() {
       </div>}
 
       {showWelcome ? (
-        <main className="min-h-screen flex items-center justify-center px-5 py-10 font-body overflow-hidden relative">
-          <div className="welcome-arc" aria-hidden="true" />
-          <div className="welcome-arc-small" aria-hidden="true" />
-          <div className="welcome-coral-dot" aria-hidden="true" />
-          <div className="relative z-10 w-full max-w-lg text-center flex flex-col items-center">
-            <BrandLogo />
-            <p className="text-base md:text-lg mt-7" style={{ color: C.ink60 }}>식사를 다시, 나답게</p>
-            <div className="mt-20 md:mt-24">
-              <h1 className="font-display text-[2rem] md:text-[2.625rem] font-semibold leading-[1.32]" style={{ color: C.ink }}>
-                오늘의 나를<br />가볍게 확인해 볼까요?
-              </h1>
-              <p className="mt-4 text-base leading-relaxed" style={{ color: C.ink60 }}>
-                맞춤 권고, 식품 선택, 체중 변화까지<br className="hidden sm:block" /> 필요한 정보만 차분히 담았어요.
-              </p>
-            </div>
-            <button type="button" onClick={() => setShowWelcome(false)} className="chip w-full max-w-sm mt-10 py-4 rounded-2xl text-base font-semibold text-white" style={{ background: C.sageDeep, boxShadow: C.shadowMd }}>
-              시작하기 <ChevronRight size={18} className="inline ml-1" />
-            </button>
-            <p className="text-xs mt-3" style={{ color: C.ink40 }}>클릭하면 맞춤 식사 도우미로 이동해요</p>
-          </div>
-        </main>
+        <main className="min-h-screen flex flex-col items-center px-5 py-10 font-body overflow-hidden relative">
+  <div className="welcome-arc" aria-hidden="true" />
+  <div className="welcome-arc-small" aria-hidden="true" />
+  <div className="welcome-coral-dot" aria-hidden="true" />
+
+  {/* 로고: 남는 높이를 모두 차지하고 그 안에서 가운데 정렬 */}
+  <div className="relative z-10 flex-1 w-full max-w-lg flex flex-col items-center justify-center text-center">
+    <BrandLogo />
+    <p className="text-base md:text-lg mt-7" style={{ color: C.ink60 }}>식사를 다시, 나답게</p>
+  </div>
+
+  {/* 시작하기 버튼: 아래쪽 */}
+  <div className="relative z-10 w-full max-w-sm flex flex-col items-center">
+    <button
+      type="button"
+      onClick={() => setShowWelcome(false)}
+      className="chip w-full py-4 rounded-2xl text-base font-semibold text-white"
+      style={{ background: C.sageDeep, boxShadow: C.shadowMd }}
+    >
+      시작하기 <ChevronRight size={18} className="inline ml-1" />
+    </button>
+    <p className="text-xs mt-3" style={{ color: C.ink40 }}>클릭하면 맞춤 식사 도우미로 이동해요</p>
+  </div>
+</main>
       ) : <div className={`${isIntro ? "max-w-2xl lg:max-w-5xl" : "max-w-2xl md:max-w-3xl"} mx-auto px-5 py-10 md:py-16 font-body`}>
         {/* 인트로 */}
         {currentStep === 0 && !flowType && (
