@@ -1924,9 +1924,6 @@ export default function App() {
       style={{ background: C.sageDeep, boxShadow: C.shadowMd }}
     >
       시작하기 <ChevronRight size={18} className="inline ml-1" />
-    </button>
-    <p className="text-xs mt-3" style={{ color: C.ink40 }}>클릭하면 맞춤 식사 도우미로 이동해요</p>
-  </div>
 </main>
       ) : <div className={`${isIntro ? "max-w-2xl lg:max-w-5xl" : "max-w-2xl md:max-w-3xl"} mx-auto px-5 py-10 md:py-16 font-body`}>
         {/* 인트로 */}
