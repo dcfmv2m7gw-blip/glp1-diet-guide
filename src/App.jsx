@@ -1909,13 +1909,11 @@ export default function App() {
   <div className="welcome-arc-small" aria-hidden="true" />
   <div className="welcome-coral-dot" aria-hidden="true" />
 
-  {/* 로고: 남는 높이를 모두 차지하고 그 안에서 가운데 정렬 */}
   <div className="relative z-10 flex-1 w-full max-w-lg flex flex-col items-center justify-center text-center">
     <BrandLogo />
     <p className="text-base md:text-lg mt-7" style={{ color: C.ink60 }}>식사를 다시, 나답게</p>
   </div>
 
-  {/* 시작하기 버튼: 아래쪽 */}
   <div className="relative z-10 w-full max-w-sm flex flex-col items-center">
     <button
       type="button"
@@ -1924,6 +1922,8 @@ export default function App() {
       style={{ background: C.sageDeep, boxShadow: C.shadowMd }}
     >
       시작하기 <ChevronRight size={18} className="inline ml-1" />
+    </button>
+  </div>
 </main>
       ) : <div className={`${isIntro ? "max-w-2xl lg:max-w-5xl" : "max-w-2xl md:max-w-3xl"} mx-auto px-5 py-10 md:py-16 font-body`}>
         {/* 인트로 */}
